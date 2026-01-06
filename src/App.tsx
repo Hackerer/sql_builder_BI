@@ -28,7 +28,8 @@ import {
     Layers,
     X,
     ChevronDown,
-    Clock
+    Clock,
+    LineChart as LineChartIcon
 } from 'lucide-react';
 import {
     LineChart,
@@ -2035,7 +2036,7 @@ export default function App() {
                                                 chartType === 'line' ? "bg-background shadow-sm text-green-500" : "text-muted-foreground hover:text-foreground"
                                             )}
                                         >
-                                            <LineChart size={14} /> 折线图
+                                            <LineChartIcon size={14} /> 折线图
                                         </button>
                                     </div>
                                     <button className="p-1.5 hover:bg-muted rounded text-muted-foreground"><Download size={16} /></button>

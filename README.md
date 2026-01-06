@@ -308,12 +308,42 @@ CMD ["nginx", "-g", "daemon off;"]
 
 ## 📄 License
 
-[MIT License](LICENSE)
 
 ---
 
-<br/>
-<br/>
+## ☁️ Vercel 部署指南
+
+本项目已配置 Vercel 适配文件，支持一键部署。
+
+### 方式一：使用 Vercel CLI（推荐用于测试）
+
+1. 全局安装 Vercel CLI:
+   ```bash
+   npm install -g vercel
+   ```
+
+2. 在项目根目录登录并部署:
+   ```bash
+   vercel login
+   vercel
+   ```
+   一路回车即可。
+
+3. 部署生产环境:
+   ```bash
+   vercel --prod
+   ```
+
+### 方式二：Git 集成（推荐用于生产）
+
+1. 将代码推送到 GitHub/GitLab/Bitbucket。
+2. 登录 [Vercel Dashboard](https://vercel.com/dashboard)。
+3. 点击 **"Add New..."** -> **"Project"**。
+4. 导入你的 Git 仓库。
+5. **Framework Preset** 选择 `Vite`。
+6. 点击 **"Deploy"**。
+
+由于项目根目录已包含 `vercel.json`，路由重写规则会自动生效，确保刷新页面时不会出现 404 错误。
 
 # SQL Builder BI - Self-Service Multi-Dimensional Analysis Platform (English)
 

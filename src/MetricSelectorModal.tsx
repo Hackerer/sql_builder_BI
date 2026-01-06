@@ -11,21 +11,9 @@ import { cn } from './lib/utils';
 
 // --- Interfaces ---
 
-interface Metric {
-    id: string;
-    name: string;
-    group: string;
-    subGroup?: string;
-    tags: string[];
-    compatibleDims: string[];
-    description: string;
-    owner: string;
-    updateFrequency: string;
-    isStarred?: boolean;
-    aggr: string;
-    unit: string;
-    compatibleGranularities?: string[]; // e.g. ['hour', 'day', 'week', 'month']
-}
+import { Metric } from './types/metric';
+
+// --- Interfaces ---
 
 interface TreeNode {
     id: string;
