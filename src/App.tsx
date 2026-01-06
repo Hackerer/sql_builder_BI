@@ -1331,7 +1331,7 @@ export default function App() {
                                                         disabled={disabled}
                                                         title={reason || metric.description}
                                                         className={cn(
-                                                            "tag-selectable",
+                                                            "tag-selectable pr-7",
                                                             isActive && "tag-active",
                                                             disabled && "tag-disabled"
                                                         )}
@@ -1340,6 +1340,14 @@ export default function App() {
                                                         {disabled && (
                                                             <AlertCircle size={10} className="ml-1 inline" />
                                                         )}
+                                                    </button>
+                                                    {/* Remove Button */}
+                                                    <button
+                                                        onClick={(e) => removeMetricFromPool(metricId, e)}
+                                                        className="absolute right-1 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-muted/80 hover:bg-destructive/90 text-muted-foreground hover:text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 z-10"
+                                                        title="移除指标"
+                                                    >
+                                                        <X size={10} />
                                                     </button>
                                                     {/* Hover Tooltip */}
                                                     <div className="absolute left-0 top-full mt-2 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none">
