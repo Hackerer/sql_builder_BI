@@ -5,9 +5,18 @@
 
 export type {
     Metric,
+    MetricLabel,
+    MetricDisplayFormat,
+    MetricDataSourceMode,
+    SyncStatus,
     TreeNode,
     LabelGroup,
     LabelOption,
+    AggregationFunction,
+    FormulaTerm,
+    FormulaExpression,
+    FormulaType,
+    FormulaConfig,
 } from './metric';
 
 export type {

@@ -6,7 +6,7 @@
 import type { Metric, LabelGroup } from '../types';
 
 /**
- * Initial metrics data - 17 metrics across 6 domains
+ * Initial metrics data - 18 metrics across 6 domains
  */
 export const INITIAL_METRICS: Metric[] = [
     // 订单主题
@@ -21,7 +21,8 @@ export const INITIAL_METRICS: Metric[] = [
         compatibleDims: ['dt', 'city', 'service_type', 'jkc_type'],
         compatibleGranularities: ['hour', 'day', 'week', 'month'],
         description: '用户点击立即呼叫后，后端生成订单的订单数',
-        owner: '履约数据团队',
+        businessOwner: '张伟、李娜、王磊',
+        dataOwner: '李明、张华',
         contactPerson: '张三',
         metricType: 'atomic',
         labels: [
@@ -42,7 +43,8 @@ export const INITIAL_METRICS: Metric[] = [
         compatibleDims: ['dt', 'city', 'supplier', 'product_type', 'service_type', 'jkc_type'],
         compatibleGranularities: ['hour', 'day', 'week', 'month'],
         description: '用户呼单后，有车应答的订单数',
-        owner: '履约数据团队',
+        businessOwner: '张伟、李娜、王磊',
+        dataOwner: '李明、张华',
         contactPerson: '李四',
         metricType: 'atomic',
         labels: [
@@ -63,7 +65,8 @@ export const INITIAL_METRICS: Metric[] = [
         compatibleDims: ['dt', 'city', 'supplier', 'product_type', 'service_type', 'jkc_type'],
         compatibleGranularities: ['hour', 'day', 'week', 'month'],
         description: '到达上车点（完成接驾）的订单数',
-        owner: '履约数据团队',
+        businessOwner: '张伟、李娜、王磊',
+        dataOwner: '李明、张华',
         contactPerson: '王五',
         metricType: 'atomic',
         labels: [
@@ -83,7 +86,8 @@ export const INITIAL_METRICS: Metric[] = [
         compatibleDims: ['dt', 'city', 'supplier', 'product_type', 'service_type', 'jkc_type'],
         compatibleGranularities: ['hour', 'day', 'week', 'month'],
         description: '车门解锁成功的订单数',
-        owner: '履约数据团队',
+        businessOwner: '陈静、刘洋',
+        dataOwner: '王强、刘芳、陈伟',
         contactPerson: '赵六',
         metricType: 'atomic',
         labels: [],
@@ -101,7 +105,8 @@ export const INITIAL_METRICS: Metric[] = [
         compatibleDims: ['dt', 'city', 'supplier', 'product_type', 'service_type', 'jkc_type'],
         compatibleGranularities: ['hour', 'day', 'week', 'month'],
         description: '开始送驾的订单数',
-        owner: '履约数据团队',
+        businessOwner: '陈静、刘洋',
+        dataOwner: '王强、刘芳、陈伟',
         updateFrequency: '实时',
         isStarred: false
     },
@@ -116,7 +121,8 @@ export const INITIAL_METRICS: Metric[] = [
         compatibleDims: ['dt', 'city', 'supplier', 'product_type', 'service_type', 'jkc_type'],
         compatibleGranularities: ['hour', 'day', 'week', 'month'],
         description: '行程结束的订单量',
-        owner: '履约数据团队',
+        businessOwner: '张伟、李娜、王磊',
+        dataOwner: '李明、张华',
         updateFrequency: '实时',
         isStarred: true
     },
@@ -131,7 +137,8 @@ export const INITIAL_METRICS: Metric[] = [
         compatibleDims: ['dt', 'city', 'supplier', 'product_type', 'service_type', 'jkc_type'],
         compatibleGranularities: ['hour', 'day', 'week', 'month'],
         description: '支付完成的订单量',
-        owner: '履约数据团队',
+        businessOwner: '陈静、刘洋',
+        dataOwner: '王强、刘芳、陈伟',
         updateFrequency: '实时',
         isStarred: false
     },
@@ -146,7 +153,8 @@ export const INITIAL_METRICS: Metric[] = [
         compatibleDims: ['dt', 'city', 'supplier', 'product_type', 'service_type', 'jkc_type', 'cancel_type', 'cancel_stage'],
         compatibleGranularities: ['hour', 'day', 'week', 'month'],
         description: '取消的订单量',
-        owner: '履约数据团队',
+        businessOwner: '张伟、李娜、王磊',
+        dataOwner: '李明、张华',
         updateFrequency: '实时',
         isStarred: false
     },
@@ -162,7 +170,8 @@ export const INITIAL_METRICS: Metric[] = [
         compatibleDims: ['dt', 'city', 'service_type', 'jkc_type'],
         compatibleGranularities: ['day', 'week', 'month'],
         description: '点击呼单的用户数（去重）',
-        owner: '用户数据团队',
+        businessOwner: '赵敏、周杰、孙强',
+        dataOwner: '赵霞、钱波',
         updateFrequency: '实时',
         isStarred: true
     },
@@ -177,7 +186,8 @@ export const INITIAL_METRICS: Metric[] = [
         compatibleDims: ['dt', 'city', 'supplier', 'product_type', 'service_type', 'jkc_type'],
         compatibleGranularities: ['day', 'week', 'month'],
         description: '行程结束的订单对应的用户数（去重）',
-        owner: '用户数据团队',
+        businessOwner: '赵敏、周杰、孙强',
+        dataOwner: '赵霞、钱波',
         updateFrequency: '实时',
         isStarred: true
     },
@@ -193,7 +203,8 @@ export const INITIAL_METRICS: Metric[] = [
         compatibleDims: ['dt', 'city', 'service_type', 'jkc_type'],
         compatibleGranularities: ['hour', 'day', 'week', 'month'],
         description: '应答单量与呼单量的比值',
-        owner: '履约数据团队',
+        businessOwner: '吴芳、郑浩',
+        dataOwner: '孙静、周明、吴杰',
         updateFrequency: '实时',
         isStarred: true
     },
@@ -208,7 +219,8 @@ export const INITIAL_METRICS: Metric[] = [
         compatibleDims: ['dt', 'city', 'supplier', 'product_type', 'service_type', 'jkc_type'],
         compatibleGranularities: ['hour', 'day', 'week', 'month'],
         description: '接驾单量与应答单量的比值',
-        owner: '履约数据团队',
+        businessOwner: '吴芳、郑浩',
+        dataOwner: '孙静、周明、吴杰',
         updateFrequency: '实时',
         isStarred: false
     },
@@ -223,7 +235,8 @@ export const INITIAL_METRICS: Metric[] = [
         compatibleDims: ['dt', 'city', 'service_type', 'jkc_type'],
         compatibleGranularities: ['hour', 'day', 'week', 'month'],
         description: '完单量与呼单量的比值',
-        owner: '履约数据团队',
+        businessOwner: '张伟、李娜、王磊',
+        dataOwner: '李明、张华',
         updateFrequency: '实时',
         isStarred: true
     },
@@ -239,7 +252,8 @@ export const INITIAL_METRICS: Metric[] = [
         compatibleDims: ['dt', 'city', 'service_type', 'jkc_type'],
         compatibleGranularities: ['hour', 'day', 'week', 'month'],
         description: '应答时间 - 呼单时间（范围：有车应答的订单）',
-        owner: '体验数据团队',
+        businessOwner: '马丽、胡涛、杨梅',
+        dataOwner: '郑晓、王军',
         updateFrequency: '实时',
         isStarred: false
     },
@@ -254,7 +268,8 @@ export const INITIAL_METRICS: Metric[] = [
         compatibleDims: ['dt', 'city', 'supplier', 'product_type', 'service_type', 'jkc_type'],
         compatibleGranularities: ['hour', 'day', 'week', 'month'],
         description: 'T到达 - T应答（范围：接驾完成的订单）',
-        owner: '体验数据团队',
+        businessOwner: '马丽、胡涛、杨梅',
+        dataOwner: '郑晓、王军',
         updateFrequency: '实时',
         isStarred: false
     },
@@ -269,7 +284,8 @@ export const INITIAL_METRICS: Metric[] = [
         compatibleDims: ['dt', 'city', 'supplier', 'product_type', 'service_type', 'jkc_type'],
         compatibleGranularities: ['day', 'week', 'month'],
         description: '极致体验订单占比',
-        owner: '体验数据团队',
+        businessOwner: '马丽、胡涛、杨梅',
+        dataOwner: '郑晓、王军',
         updateFrequency: 'T+1',
         isStarred: false
     },
@@ -285,7 +301,8 @@ export const INITIAL_METRICS: Metric[] = [
         compatibleDims: ['dt', 'city', 'supplier', 'product_type', 'vehicle_usage', 'asset_type'],
         compatibleGranularities: ['day', 'week', 'month'],
         description: '当日至少上线1小时的车辆数',
-        owner: '供应链数据团队',
+        businessOwner: '林峰、王琳',
+        dataOwner: '马超、林燕、黄华',
         updateFrequency: 'T+1',
         isStarred: false
     },
@@ -300,7 +317,8 @@ export const INITIAL_METRICS: Metric[] = [
         compatibleDims: ['dt', 'city', 'supplier', 'product_type', 'vehicle_usage', 'asset_type'],
         compatibleGranularities: ['day', 'week', 'month'],
         description: '车辆上线运营时长',
-        owner: '供应链数据团队',
+        businessOwner: '林峰、王琳',
+        dataOwner: '马超、林燕、黄华',
         updateFrequency: 'T+1',
         isStarred: false
     }
@@ -352,3 +370,31 @@ export const AVAILABLE_TAGS = [
  * Metric groups for category selection
  */
 export const METRIC_GROUPS = ['订单', '用户', '效率', '时长', '车辆'];
+
+/**
+ * Business owners for selection
+ */
+export const BUSINESS_OWNERS = [
+    '张伟、李娜、王磊',
+    '陈静、刘洋',
+    '赵敏、周杰、孙强',
+    '吴芳、郑浩',
+    '马丽、胡涛、杨梅',
+    '林峰、王琳',
+    '黄鹏、徐婷、何军',
+    '宋雪、朱亮'
+];
+
+/**
+ * Data owners for selection
+ */
+export const DATA_OWNERS = [
+    '李明、张华',
+    '王强、刘芳、陈伟',
+    '赵霞、钱波',
+    '孙静、周明、吴杰',
+    '郑晓、王军',
+    '马超、林燕、黄华',
+    '胡婷、杨凯',
+    '朱磊、徐芳、何勇'
+];

@@ -3,6 +3,7 @@ import {
     BarChart3,
     Calendar,
     ChevronRight,
+    ChevronLeft,
     Download,
     GitCompare,
     LayoutDashboard,
@@ -76,7 +77,8 @@ const INITIAL_METRICS: MetricType[] = [
         tags: ['core', 'realtime'],
         compatibleDims: ['dt', 'city', 'service_type', 'jkc_type'],
         description: '用户点击立即呼叫后，后端生成订单的订单数',
-        owner: '履约数据团队',
+        businessOwner: '履约产品组',
+        dataOwner: '履约数据团队',
         updateFrequency: '实时',
         isStarred: true,
         compatibleGranularities: ['hour', 'day', 'week', 'month']
@@ -91,7 +93,8 @@ const INITIAL_METRICS: MetricType[] = [
         tags: ['core', 'realtime'],
         compatibleDims: ['dt', 'city', 'supplier', 'product_type', 'service_type', 'jkc_type'],
         description: '用户呼单后，有车应答的订单数',
-        owner: '履约数据团队',
+        businessOwner: '履约产品组',
+        dataOwner: '履约数据团队',
         updateFrequency: '实时',
         isStarred: true,
         compatibleGranularities: ['hour', 'day', 'week', 'month']
@@ -106,7 +109,8 @@ const INITIAL_METRICS: MetricType[] = [
         tags: ['core', 'realtime'],
         compatibleDims: ['dt', 'city', 'supplier', 'product_type', 'service_type', 'jkc_type'],
         description: '到达上车点（完成接驾）的订单数',
-        owner: '履约数据团队',
+        businessOwner: '履约产品组',
+        dataOwner: '履约数据团队',
         updateFrequency: '实时',
         isStarred: false
     },
@@ -120,7 +124,8 @@ const INITIAL_METRICS: MetricType[] = [
         tags: ['core', 'realtime'],
         compatibleDims: ['dt', 'city', 'supplier', 'product_type', 'service_type', 'jkc_type'],
         description: '车门解锁成功的订单数',
-        owner: '履约数据团队',
+        businessOwner: '履约产品组',
+        dataOwner: '履约数据团队',
         updateFrequency: '实时',
         isStarred: false
     },
@@ -134,7 +139,8 @@ const INITIAL_METRICS: MetricType[] = [
         tags: ['core', 'realtime'],
         compatibleDims: ['dt', 'city', 'supplier', 'product_type', 'service_type', 'jkc_type'],
         description: '开始送驾的订单数',
-        owner: '履约数据团队',
+        businessOwner: '履约产品组',
+        dataOwner: '履约数据团队',
         updateFrequency: '实时',
         isStarred: false
     },
@@ -148,7 +154,8 @@ const INITIAL_METRICS: MetricType[] = [
         tags: ['core', 'realtime'],
         compatibleDims: ['dt', 'city', 'supplier', 'product_type', 'service_type', 'jkc_type'],
         description: '行程结束的订单量',
-        owner: '履约数据团队',
+        businessOwner: '履约产品组',
+        dataOwner: '履约数据团队',
         updateFrequency: '实时',
         isStarred: true
     },
@@ -162,7 +169,8 @@ const INITIAL_METRICS: MetricType[] = [
         tags: ['core', 'realtime'],
         compatibleDims: ['dt', 'city', 'supplier', 'product_type', 'service_type', 'jkc_type'],
         description: '支付完成的订单量',
-        owner: '履约数据团队',
+        businessOwner: '履约产品组',
+        dataOwner: '履约数据团队',
         updateFrequency: '实时',
         isStarred: false
     },
@@ -176,7 +184,8 @@ const INITIAL_METRICS: MetricType[] = [
         tags: ['core', 'realtime'],
         compatibleDims: ['dt', 'city', 'supplier', 'product_type', 'service_type', 'jkc_type', 'cancel_type', 'cancel_stage'],
         description: '取消的订单量',
-        owner: '履约数据团队',
+        businessOwner: '履约产品组',
+        dataOwner: '履约数据团队',
         updateFrequency: '实时',
         isStarred: false
     },
@@ -191,7 +200,8 @@ const INITIAL_METRICS: MetricType[] = [
         tags: ['core', 'user'],
         compatibleDims: ['dt', 'city', 'service_type', 'jkc_type'],
         description: '点击呼单的用户数（去重）',
-        owner: '用户数据团队',
+        businessOwner: '用户增长组',
+        dataOwner: '用户数据团队',
         updateFrequency: '实时',
         isStarred: true
     },
@@ -205,7 +215,8 @@ const INITIAL_METRICS: MetricType[] = [
         tags: ['core', 'user'],
         compatibleDims: ['dt', 'city', 'supplier', 'product_type', 'service_type', 'jkc_type'],
         description: '行程结束的订单对应的用户数（去重）',
-        owner: '用户数据团队',
+        businessOwner: '用户增长组',
+        dataOwner: '用户数据团队',
         updateFrequency: '实时',
         isStarred: true
     },
@@ -220,7 +231,8 @@ const INITIAL_METRICS: MetricType[] = [
         tags: ['secondary', 'rate'],
         compatibleDims: ['dt', 'city', 'service_type', 'jkc_type'],
         description: '应答单量与呼单量的比值',
-        owner: '履约数据团队',
+        businessOwner: '履约产品组',
+        dataOwner: '履约数据团队',
         updateFrequency: '实时',
         isStarred: true
     },
@@ -234,7 +246,8 @@ const INITIAL_METRICS: MetricType[] = [
         tags: ['secondary', 'rate'],
         compatibleDims: ['dt', 'city', 'supplier', 'product_type', 'service_type', 'jkc_type'],
         description: '接驾单量与应答单量的比值',
-        owner: '履约数据团队',
+        businessOwner: '履约产品组',
+        dataOwner: '履约数据团队',
         updateFrequency: '实时',
         isStarred: false
     },
@@ -248,7 +261,8 @@ const INITIAL_METRICS: MetricType[] = [
         tags: ['secondary', 'rate'],
         compatibleDims: ['dt', 'city', 'service_type', 'jkc_type'],
         description: '完单量与呼单量的比值',
-        owner: '履约数据团队',
+        businessOwner: '履约产品组',
+        dataOwner: '履约数据团队',
         updateFrequency: '实时',
         isStarred: true
     },
@@ -263,7 +277,8 @@ const INITIAL_METRICS: MetricType[] = [
         tags: ['secondary', 'duration'],
         compatibleDims: ['dt', 'city', 'service_type', 'jkc_type'],
         description: '应答时间 - 呼单时间（范围：有车应答的订单）',
-        owner: '体验数据团队',
+        businessOwner: '体验产品组',
+        dataOwner: '体验数据团队',
         updateFrequency: '实时',
         isStarred: false
     },
@@ -277,7 +292,8 @@ const INITIAL_METRICS: MetricType[] = [
         tags: ['secondary', 'duration'],
         compatibleDims: ['dt', 'city', 'supplier', 'product_type', 'service_type', 'jkc_type'],
         description: '车辆抵达接驾点的实际接驾时长',
-        owner: '体验数据团队',
+        businessOwner: '体验产品组',
+        dataOwner: '体验数据团队',
         updateFrequency: '实时',
         isStarred: false
     },
@@ -292,7 +308,8 @@ const INITIAL_METRICS: MetricType[] = [
         tags: ['secondary', 'rate'],
         compatibleDims: ['dt', 'city', 'service_type', 'jkc_type'],
         description: '取消订单量/呼单量',
-        owner: '体验数据团队',
+        businessOwner: '体验产品组',
+        dataOwner: '体验数据团队',
         updateFrequency: '实时',
         isStarred: false
     },
@@ -306,7 +323,8 @@ const INITIAL_METRICS: MetricType[] = [
         tags: ['secondary', 'rate'],
         compatibleDims: ['dt', 'city', 'supplier', 'product_type', 'service_type', 'jkc_type'],
         description: '极致体验订单占比',
-        owner: '体验数据团队',
+        businessOwner: '体验产品组',
+        dataOwner: '体验数据团队',
         updateFrequency: 'T+1',
         isStarred: false
     },
@@ -321,7 +339,8 @@ const INITIAL_METRICS: MetricType[] = [
         tags: ['secondary', 'vehicle'],
         compatibleDims: ['dt', 'city', 'supplier', 'product_type', 'vehicle_usage', 'asset_type'],
         description: '上线进入过商业状态的运营车辆数',
-        owner: '供应链数据团队',
+        businessOwner: '供应链产品组',
+        dataOwner: '供应链数据团队',
         updateFrequency: 'T+1',
         isStarred: false
     },
@@ -335,7 +354,8 @@ const INITIAL_METRICS: MetricType[] = [
         tags: ['secondary', 'vehicle'],
         compatibleDims: ['dt', 'city', 'supplier', 'product_type', 'vehicle_usage', 'asset_type'],
         description: '车辆上线运营时长',
-        owner: '供应链数据团队',
+        businessOwner: '供应链产品组',
+        dataOwner: '供应链数据团队',
         updateFrequency: 'T+1',
         isStarred: false
     }
@@ -384,6 +404,7 @@ const TIME_GRANULARITIES = [
 
 export default function App() {
     const [isDarkMode, setIsDarkMode] = useState(false);
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [activeMode, setActiveMode] = useState('trend');
     const [currentView, setCurrentView] = useState<'analysis' | 'config'>('analysis');
     const [metricsMetadata, setMetricsMetadata] = useState<MetricType[]>(INITIAL_METRICS);
@@ -1138,44 +1159,65 @@ export default function App() {
             <div className="flex w-full h-full bg-background transition-colors duration-300">
 
                 {/* Sidebar */}
-                <aside className="w-60 glass-nav flex flex-col z-20 transition-all duration-300 border-r border-border">
-                    <div className="p-6">
+                <aside className={cn(
+                    "glass-nav flex flex-col z-20 transition-all duration-300 border-r border-border relative",
+                    isSidebarCollapsed ? "w-16" : "w-60"
+                )}>
+                    {/* Collapse/Expand Button */}
+                    <button
+                        onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                        className="absolute -right-3 top-6 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md hover:bg-primary/90 transition-colors z-30"
+                        title={isSidebarCollapsed ? "展开侧边栏" : "折叠侧边栏"}
+                    >
+                        {isSidebarCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+                    </button>
+
+                    <div className={cn("p-6", isSidebarCollapsed && "p-4")}>
                         <div className="flex items-center gap-2 text-primary">
-                            <Zap size={24} className="fill-primary" />
-                            <span className="font-bold text-lg tracking-tight">萤火分析平台</span>
+                            <Zap size={24} className="fill-primary flex-shrink-0" />
+                            {!isSidebarCollapsed && <span className="font-bold text-lg tracking-tight">萤火分析平台</span>}
                         </div>
                     </div>
 
-                    <nav className="flex-1 px-4 space-y-1">
+                    <nav className={cn("flex-1 px-4 space-y-1", isSidebarCollapsed && "px-2")}>
                         {['履约主题域', '车辆主题域', '营销主题域', '资产主题域'].map((item, idx) => (
                             <button
                                 key={item}
                                 className={cn(
                                     "w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all",
+                                    isSidebarCollapsed && "px-2 justify-center",
                                     idx === 0
                                         ? "bg-primary/10 text-primary font-medium"
                                         : "text-muted-foreground hover:bg-muted hover:text-foreground"
                                 )}
+                                title={isSidebarCollapsed ? item : undefined}
                             >
-                                <div className="flex items-center gap-3">
-                                    <LayoutDashboard size={16} />
-                                    {item}
+                                <div className={cn("flex items-center gap-3", isSidebarCollapsed && "gap-0")}>
+                                    <LayoutDashboard size={16} className="flex-shrink-0" />
+                                    {!isSidebarCollapsed && item}
                                 </div>
-                                {idx === 0 && <div className="w-1.5 h-1.5 rounded-full bg-primary" />}
+                                {idx === 0 && !isSidebarCollapsed && <div className="w-1.5 h-1.5 rounded-full bg-primary" />}
                             </button>
                         ))}
                     </nav>
 
-                    <div className="p-4 border-t border-border mt-auto">
-                        <div className="flex items-center gap-3 p-2 rounded-xl bg-muted/20 border border-border">
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-xs font-bold text-white">A</div>
-                            <div className="flex-1 overflow-hidden">
-                                <p className="text-xs font-bold truncate">Alex Chen</p>
-                                <p className="text-[10px] text-muted-foreground truncate uppercase tracking-tighter">Senior Analyst</p>
-                            </div>
-                            <button className="text-muted-foreground hover:text-destructive transition-colors">
-                                <LogOut size={14} />
-                            </button>
+                    <div className={cn("p-4 border-t border-border mt-auto", isSidebarCollapsed && "p-2")}>
+                        <div className={cn(
+                            "flex items-center gap-3 p-2 rounded-xl bg-muted/20 border border-border",
+                            isSidebarCollapsed && "justify-center p-2"
+                        )}>
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">A</div>
+                            {!isSidebarCollapsed && (
+                                <>
+                                    <div className="flex-1 overflow-hidden">
+                                        <p className="text-xs font-bold truncate">Alex Chen</p>
+                                        <p className="text-[10px] text-muted-foreground truncate uppercase tracking-tighter">Senior Analyst</p>
+                                    </div>
+                                    <button className="text-muted-foreground hover:text-destructive transition-colors">
+                                        <LogOut size={14} />
+                                    </button>
+                                </>
+                            )}
                         </div>
                     </div>
                 </aside>
