@@ -14,6 +14,8 @@ import {
     Search,
     Settings,
     Table as TableIcon,
+    Table2,
+    Hash,
     TrendingUp,
     Zap,
     AlertCircle,
@@ -30,7 +32,8 @@ import {
     X,
     ChevronDown,
     Clock,
-    LineChart as LineChartIcon
+    LineChart as LineChartIcon,
+    Database
 } from 'lucide-react';
 import {
     LineChart,
@@ -50,9 +53,12 @@ import { cn } from './lib/utils';
 import { format, subDays, startOfWeek, endOfWeek, parseISO, startOfMonth, formatISO, subHours, subWeeks, subMonths, getWeekOfMonth } from 'date-fns';
 import MetricSelectorModal from './MetricSelectorModal';
 import MetricConfigPage from './MetricConfigPage';
+import TableManagementPage from './TableManagementPage';
+import DimensionManagementPage from './DimensionManagementPage';
 import { MOCK_DATA } from './data/mockGenerator';
 import {
     Metric as MetricType,
+    Dimension,
     QueryFilter,
     ComparisonType,
     TimeGranularity
@@ -406,8 +412,20 @@ export default function App() {
     const [isDarkMode, setIsDarkMode] = useState(false);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [activeMode, setActiveMode] = useState('trend');
-    const [currentView, setCurrentView] = useState<'analysis' | 'config'>('analysis');
+    const [currentView, setCurrentView] = useState<'analysis' | 'config' | 'tables' | 'dimensions'>('analysis');
     const [metricsMetadata, setMetricsMetadata] = useState<MetricType[]>(INITIAL_METRICS);
+    const [dimensionsMetadata, setDimensionsMetadata] = useState<Dimension[]>([
+        { id: 'dt', name: '日期', group: '时间', description: '日期分区字段', isCore: true, dataType: 'date' },
+        { id: 'city', name: '城市', group: '地域', description: '城市维度', isCore: true, dataType: 'string' },
+        { id: 'supplier', name: '供应商', group: '业务', description: '供应商维度', isCore: false, dataType: 'string' },
+        { id: 'product_type', name: '服务产品类型', group: '业务', description: '产品类型', isCore: false, dataType: 'string' },
+        { id: 'service_type', name: '服务类型', group: '业务', description: '服务类型', isCore: true, dataType: 'string' },
+        { id: 'jkc_type', name: 'JKC内外部', group: '业务', description: 'JKC内外部', isCore: false, dataType: 'string' },
+        { id: 'cancel_type', name: '取消类型', group: '业务', description: '订单取消类型', isCore: false, dataType: 'string' },
+        { id: 'cancel_stage', name: '取消阶段', group: '业务', description: '取消发生阶段', isCore: false, dataType: 'string' },
+        { id: 'vehicle_usage', name: '车辆用途', group: '车辆', description: '车辆用途分类', isCore: false, dataType: 'string' },
+        { id: 'asset_type', name: '资产性质', group: '车辆', description: '资产性质', isCore: false, dataType: 'string' },
+    ]);
 
     // --- Date Range State ---
     const [dateRange, setDateRange] = useState<{
@@ -1154,6 +1172,42 @@ export default function App() {
         );
     }
 
+    // If table management view is active
+    if (currentView === 'tables') {
+        return (
+            <TableManagementPage
+                onBack={() => setCurrentView('analysis')}
+                onImportMetrics={(newMetrics) => {
+                    setMetricsMetadata(prev => {
+                        const existingIds = new Set(prev.map(m => m.id));
+                        const toAdd = newMetrics.filter(m => !existingIds.has(m.id));
+                        return [...prev, ...toAdd];
+                    });
+                }}
+                onImportDimensions={(newDimensions) => {
+                    setDimensionsMetadata(prev => {
+                        const existingIds = new Set(prev.map(d => d.id));
+                        const toAdd = newDimensions.filter(d => !existingIds.has(d.id));
+                        return [...prev, ...toAdd];
+                    });
+                }}
+                existingMetricIds={metricsMetadata.map(m => m.id)}
+                existingDimensionIds={dimensionsMetadata.map(d => d.id)}
+            />
+        );
+    }
+
+    // If dimension management view is active
+    if (currentView === 'dimensions') {
+        return (
+            <DimensionManagementPage
+                dimensions={dimensionsMetadata}
+                onUpdateDimensions={setDimensionsMetadata}
+                onBack={() => setCurrentView('analysis')}
+            />
+        );
+    }
+
     return (
         <div className={cn("flex h-screen bg-background text-foreground overflow-hidden font-sans", isDarkMode && "dark")}>
             <div className="flex w-full h-full bg-background transition-colors duration-300">
@@ -1232,13 +1286,33 @@ export default function App() {
                             <span className="text-sm font-medium">自助BI分析</span>
                         </div>
                         <div className="flex items-center gap-4">
-                            <button
-                                onClick={() => setCurrentView('config')}
-                                className="p-2 text-muted-foreground hover:text-primary hover:bg-secondary/80 rounded-full transition-all"
-                                title="指标配置"
-                            >
-                                <Settings size={20} />
-                            </button>
+                            <div className="flex items-center gap-1 mr-2">
+                                <button
+                                    onClick={() => setCurrentView('tables')}
+                                    className="px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-green-600 hover:bg-green-500/10 rounded-lg transition-all flex items-center gap-1.5"
+                                    title="表模型管理"
+                                >
+                                    <Table2 size={16} />
+                                    表管理
+                                </button>
+                                <button
+                                    onClick={() => setCurrentView('dimensions')}
+                                    className="px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-purple-600 hover:bg-purple-500/10 rounded-lg transition-all flex items-center gap-1.5"
+                                    title="维度管理"
+                                >
+                                    <Hash size={16} />
+                                    维度
+                                </button>
+                                <button
+                                    onClick={() => setCurrentView('config')}
+                                    className="px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-blue-600 hover:bg-blue-500/10 rounded-lg transition-all flex items-center gap-1.5"
+                                    title="指标管理"
+                                >
+                                    <Database size={16} />
+                                    指标
+                                </button>
+                            </div>
+                            <div className="w-px h-6 bg-border" />
                             <button
                                 onClick={() => setIsDarkMode(!isDarkMode)}
                                 className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground hover:text-foreground"

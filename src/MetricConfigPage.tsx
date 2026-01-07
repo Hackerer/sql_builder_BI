@@ -27,12 +27,12 @@ const AVAILABLE_TAGS = [
     'rate', 'duration', 'user', 'vehicle'
 ];
 const BUSINESS_OWNERS = [
-    '履约产品组', '用户增长组', '体验产品组', '供应链产品组',
-    '营销产品组', '财务产品组', '运营产品组', '战略产品组'
+    '张明 (履约PM)', '李娜 (用户增长PM)', '王强 (体验PM)', '刘洋 (供应链PM)',
+    '陈静 (营销PM)', '赵伟 (财务PM)', '周芳 (运营PM)', '吴磊 (战略PM)'
 ];
 const DATA_OWNERS = [
-    '履约数据团队', '用户数据团队', '体验数据团队', '供应链数据团队',
-    '营销数据团队', '财务数据团队', '运营数据团队', '平台数据团队'
+    '孙浩 (履约数据)', '钱丽 (用户数据)', '郑凯 (体验数据)', '冯雪 (供应链数据)',
+    '蒋涛 (营销数据)', '沈婷 (财务数据)', '韩冰 (运营数据)', '杨帆 (平台数据)'
 ];
 const AGGREGATION_TYPES = ['SUM', 'AVG', 'COUNT', 'COUNT_DISTINCT', 'MAX', 'MIN', 'CALC'];
 
@@ -49,13 +49,12 @@ const AGGREGATION_FUNCTIONS: { value: AggregationFunction; label: string; descri
     { value: 'PERCENTILE', label: 'PERCENTILE', description: '百分位数' },
 ];
 
-// Formula types for calculated metrics
+// Formula types for calculated metrics (weighted_avg removed per requirement)
 const FORMULA_TYPES: { value: FormulaType; label: string; description: string; example: string }[] = [
     { value: 'simple', label: '简单聚合', description: '单一聚合函数', example: 'SUM([指标])' },
     { value: 'ratio', label: '比率类型', description: '分子除以分母', example: 'SUM([A]) / SUM([B])' },
     { value: 'growth', label: '增长率', description: '环比/同比增长', example: '(当期-上期)/上期*100' },
     { value: 'difference', label: '差值类型', description: '两个指标相减', example: 'SUM([A]) - SUM([B])' },
-    { value: 'weighted_avg', label: '加权平均', description: '值乘权重再除以权重', example: 'SUM([值*权重])/SUM([权重])' },
     { value: 'custom', label: '自定义公式', description: '自由组合复杂公式', example: '自定义表达式' },
 ];
 const AVAILABLE_DIMENSIONS = [
@@ -71,23 +70,23 @@ const AVAILABLE_DIMENSIONS = [
     { id: 'asset_type', name: '资产性质' },
 ];
 
-// Default empty metric
+// Default empty metric with reasonable defaults
 const createEmptyMetric = (): Metric => ({
     id: '',
     name: '',
     group: '订单',
     subGroup: '',
     tags: [],
-    compatibleDims: ['dt'],
+    compatibleDims: ['dt', 'city'],  // Default to common dimensions
     description: '',
-    businessOwner: '',
-    dataOwner: '',
+    businessOwner: BUSINESS_OWNERS[0],  // Default to first owner
+    dataOwner: DATA_OWNERS[0],  // Default to first data owner
     metricType: 'atomic',
     formula: '',
     sourceTable: '',
     sourceField: '',
     displayFormat: {
-        decimals: 2,
+        decimals: 0,  // Default to integer display for most metrics
         isPercentage: false,
         useThousandSeparator: true,
     },
@@ -117,7 +116,7 @@ const createEmptyExpression = (): FormulaExpression => ({
 const createDefaultFormulaConfig = (type: FormulaType = 'ratio'): FormulaConfig => ({
     type,
     numerator: createEmptyExpression(),
-    denominator: type === 'ratio' || type === 'growth' || type === 'weighted_avg' ? createEmptyExpression() : undefined,
+    denominator: type === 'ratio' || type === 'growth' ? createEmptyExpression() : undefined,
     multiplier: type === 'growth' ? 100 : undefined,
 });
 
@@ -401,8 +400,8 @@ function FormulaBuilder({ formulaConfig, onChange, atomicMetrics, legacyFormula,
                             colorClass="border-blue-200 bg-blue-50/50"
                         />
 
-                        {/* Denominator (for ratio, growth, weighted_avg) */}
-                        {(config.type === 'ratio' || config.type === 'growth' || config.type === 'weighted_avg') && config.denominator && (
+                        {/* Denominator (for ratio, growth) */}
+                        {(config.type === 'ratio' || config.type === 'growth') && config.denominator && (
                             <>
                                 <div className="flex items-center justify-center">
                                     <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-2xl font-light text-muted-foreground">
@@ -496,10 +495,11 @@ interface MetricEditorProps {
     onClose: () => void;
     onSave: (metric: Metric) => void;
     existingIds: string[];
+    existingNames: string[];
     atomicMetrics: Metric[];
 }
 
-function MetricEditor({ metric, isOpen, onClose, onSave, existingIds, atomicMetrics }: MetricEditorProps) {
+function MetricEditor({ metric, isOpen, onClose, onSave, existingIds, existingNames, atomicMetrics }: MetricEditorProps) {
     const [editingMetric, setEditingMetric] = useState<Metric>(metric || createEmptyMetric());
     const [activeSection, setActiveSection] = useState<'basic' | 'source' | 'format'>('basic');
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -528,6 +528,10 @@ function MetricEditor({ metric, isOpen, onClose, onSave, existingIds, atomicMetr
 
         if (!editingMetric.name.trim()) {
             newErrors.name = '指标名称不能为空';
+        } else if (isNew && existingNames.includes(editingMetric.name.trim())) {
+            newErrors.name = '指标名称已存在，请使用唯一的名称';
+        } else if (!isNew && metric?.name !== editingMetric.name.trim() && existingNames.includes(editingMetric.name.trim())) {
+            newErrors.name = '指标名称已存在，请使用唯一的名称';
         }
 
         if (!editingMetric.businessOwner) {
@@ -1725,12 +1729,13 @@ export default function MetricConfigPage({ metrics, onUpdateMetrics, onBack }: M
                                                 <th className="px-4 py-4 w-32 min-w-[120px]">指标 Code</th>
                                                 <th className="px-4 py-4 w-36 min-w-[100px]">指标名称</th>
                                                 <th className="px-4 py-4 w-24">类型</th>
-                                                <th className="px-4 py-4 w-32">分组</th>
-                                                <th className="px-4 py-4 w-40">数据表模型</th>
-                                                <th className="px-4 py-4 w-32">业务负责人</th>
-                                                <th className="px-4 py-4 w-32">数据负责人</th>
-                                                <th className="px-4 py-4 w-24">格式</th>
-                                                <th className="px-4 py-4 w-20">操作</th>
+                                                <th className="px-4 py-4 w-28">分组</th>
+                                                <th className="px-4 py-4 min-w-[180px]">指标口径</th>
+                                                <th className="px-4 py-4 w-44">数据来源 (表.字段)</th>
+                                                <th className="px-4 py-4 w-28">业务负责人</th>
+                                                <th className="px-4 py-4 w-28">数据负责人</th>
+                                                <th className="px-4 py-4 w-20">格式</th>
+                                                <th className="px-4 py-4 w-16">操作</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-border">
@@ -1765,16 +1770,31 @@ export default function MetricConfigPage({ metrics, onUpdateMetrics, onBack }: M
                                                             {metric.subGroup && <div className="text-xs text-muted-foreground">{metric.subGroup}</div>}
                                                         </td>
                                                         <td className="px-4 py-4">
+                                                            <div className="text-xs text-muted-foreground max-w-[200px] truncate" title={metric.description}>
+                                                                {metric.description || <span className="text-muted-foreground/50 italic">未填写</span>}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-4 py-4">
                                                             {metric.metricType === 'calculated' ? (
-                                                                <span className="text-xs font-mono text-muted-foreground truncate block max-w-[120px]" title={metric.formula}>
+                                                                <span className="text-xs font-mono text-purple-600 truncate block max-w-[160px]" title={metric.formula}>
                                                                     {metric.formula || '-'}
                                                                 </span>
                                                             ) : (
-                                                                <span className="text-xs font-mono">{metric.sourceTable || '-'}</span>
+                                                                <span className="text-xs font-mono text-muted-foreground">
+                                                                    {metric.sourceTable && metric.sourceField ? (
+                                                                        <span title={`${metric.sourceTable}.${metric.sourceField}`}>
+                                                                            <span className="text-foreground/70">{metric.sourceTable}</span>
+                                                                            <span className="text-primary">.</span>
+                                                                            <span className="text-blue-600">{metric.sourceField}</span>
+                                                                        </span>
+                                                                    ) : metric.sourceTable ? (
+                                                                        metric.sourceTable
+                                                                    ) : '-'}
+                                                                </span>
                                                             )}
                                                         </td>
-                                                        <td className="px-4 py-4 text-sm">{metric.businessOwner || <span className="text-muted-foreground">-</span>}</td>
-                                                        <td className="px-4 py-4 text-sm">{metric.dataOwner || <span className="text-muted-foreground">-</span>}</td>
+                                                        <td className="px-4 py-4 text-xs">{metric.businessOwner || <span className="text-muted-foreground">-</span>}</td>
+                                                        <td className="px-4 py-4 text-xs">{metric.dataOwner || <span className="text-muted-foreground">-</span>}</td>
                                                         <td className="px-4 py-4">
                                                             <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                                                 {metric.displayFormat?.isPercentage && <Percent size={12} />}
@@ -1821,6 +1841,7 @@ export default function MetricConfigPage({ metrics, onUpdateMetrics, onBack }: M
                         onClose={() => setEditorOpen(false)}
                         onSave={handleSaveMetric}
                         existingIds={localMetrics.map(m => m.id)}
+                        existingNames={localMetrics.map(m => m.name)}
                         atomicMetrics={localMetrics.filter(m => m.metricType !== 'calculated')}
                     />
                 )}

@@ -22,6 +22,8 @@ export type {
 export type {
     Dimension,
     DimensionValues,
+    DimensionDataType,
+    DimensionAggregation,
 } from './dimension';
 
 export type {
@@ -34,3 +36,13 @@ export type {
     ChartType,
     TableViewMode,
 } from './query';
+
+export type {
+    SQLDataType,
+    FieldClassification,
+    ParsedField,
+    TableDefinition,
+    ParseResult,
+    ImportConfig,
+    ImportHistoryEntry,
+} from './table';
