@@ -288,21 +288,18 @@ npm run build
 # 将 dist/ 目录部署到 Nginx、CDN 或其他静态托管服务
 ```
 
-### Docker 部署
+### Docker 启动 (开发模式)
 
-```dockerfile
-FROM node:18-alpine AS builder
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npm run build
+本项目支持 Docker 一键启动开发环境：
 
-FROM nginx:alpine
-COPY --from=builder /app/dist /usr/share/nginx/html
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+```bash
+# 启动服务
+docker-compose up
 ```
+
+访问地址：[http://localhost:5173](http://localhost:5173)
+
+详细说明请参考 [DEPLOY.md](./DEPLOY.md)。
 
 ---
 

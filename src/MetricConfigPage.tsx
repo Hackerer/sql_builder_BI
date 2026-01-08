@@ -17,10 +17,11 @@ interface MetricConfigPageProps {
     metrics: Metric[];
     onUpdateMetrics: (newMetrics: Metric[]) => void;
     onBack: () => void;
+    embedded?: boolean;  // When true, hide the page header (used in unified config page)
 }
 
-// Constants
-const GROUPS = ['订单', '用户', '效率', '时长', '体验', '车辆', '财务', '转化', '供应链'];
+// Constants - Default groups (can be extended via UI)
+const DEFAULT_GROUPS = ['订单', '用户', '效率', '时长', '体验', '车辆', '财务', '转化', '供应链'];
 const AVAILABLE_TAGS = [
     'core', 'secondary', 'realtime', 'T+1', 'DWS', 'ADS', 'DWD',
     'supply_chain', 'financial', 'experience', 'kpi', 'derived',
@@ -479,6 +480,233 @@ function FormulaBuilder({ formulaConfig, onChange, atomicMetrics, legacyFormula,
     );
 }
 
+// Group Manager Modal Component (for Metrics)
+interface GroupManagerModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    groups: string[];
+    onUpdateGroups: (groups: string[]) => void;
+    metrics: Metric[];
+}
+
+function GroupManagerModal({ isOpen, onClose, groups, onUpdateGroups, metrics }: GroupManagerModalProps) {
+    const [localGroups, setLocalGroups] = useState<string[]>(groups);
+    const [newGroupName, setNewGroupName] = useState('');
+    const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
+    const [editingGroupName, setEditingGroupName] = useState('');
+
+    React.useEffect(() => {
+        setLocalGroups(groups);
+    }, [groups, isOpen]);
+
+    // Calculate metric count for each group
+    const getGroupMetricCount = (group: string) => {
+        return metrics.filter(m => m.group === group).length;
+    };
+
+    // Add new group
+    const handleAddGroup = () => {
+        const trimmed = newGroupName.trim();
+        if (!trimmed) return;
+        if (localGroups.includes(trimmed)) {
+            alert('分组名称已存在');
+            return;
+        }
+        setLocalGroups([...localGroups, trimmed]);
+        setNewGroupName('');
+    };
+
+    // Delete group
+    const handleDeleteGroup = (group: string) => {
+        const count = getGroupMetricCount(group);
+        if (count > 0) {
+            alert(`无法删除分组"${group}"，因为还有 ${count} 个指标使用此分组`);
+            return;
+        }
+        if (window.confirm(`确定要删除分组"${group}"吗？`)) {
+            setLocalGroups(localGroups.filter(g => g !== group));
+        }
+    };
+
+    // Start editing group
+    const handleStartEdit = (group: string) => {
+        setEditingGroupId(group);
+        setEditingGroupName(group);
+    };
+
+    // Save edit
+    const handleSaveEdit = () => {
+        const trimmed = editingGroupName.trim();
+        if (!trimmed) return;
+        if (trimmed !== editingGroupId && localGroups.includes(trimmed)) {
+            alert('分组名称已存在');
+            return;
+        }
+        const newGroups = localGroups.map(g => g === editingGroupId ? trimmed : g);
+        setLocalGroups(newGroups);
+        setEditingGroupId(null);
+        setEditingGroupName('');
+    };
+
+    // Save all changes
+    const handleSave = () => {
+        onUpdateGroups(localGroups);
+        onClose();
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={onClose}
+        >
+            <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-card border border-border rounded-2xl shadow-2xl w-[600px] max-h-[80vh] overflow-hidden flex flex-col"
+            >
+                {/* Header */}
+                <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/30">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-blue-500/10 text-blue-600">
+                            <Layers size={20} />
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-lg">管理指标分组</h3>
+                            <p className="text-xs text-muted-foreground">
+                                创建、编辑或删除指标分组
+                            </p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-muted rounded-full">
+                        <X size={20} />
+                    </button>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                    {/* Add new group */}
+                    <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl">
+                        <label className="text-sm font-medium mb-2 block">添加新分组</label>
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                value={newGroupName}
+                                onChange={(e) => setNewGroupName(e.target.value)}
+                                onKeyPress={(e) => e.key === 'Enter' && handleAddGroup()}
+                                placeholder="输入分组名称..."
+                                className="flex-1 px-3 py-2 bg-background border border-border rounded-lg text-sm"
+                            />
+                            <button
+                                onClick={handleAddGroup}
+                                disabled={!newGroupName.trim()}
+                                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium disabled:opacity-50 flex items-center gap-2"
+                            >
+                                <Plus size={16} />
+                                添加
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Group list */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium">现有分组 ({localGroups.length})</label>
+                        {localGroups.map(group => {
+                            const count = getGroupMetricCount(group);
+                            const isEditing = editingGroupId === group;
+
+                            return (
+                                <div
+                                    key={group}
+                                    className="flex items-center justify-between p-3 bg-secondary/50 border border-border rounded-lg group hover:bg-secondary transition-colors"
+                                >
+                                    {isEditing ? (
+                                        <div className="flex-1 flex items-center gap-2">
+                                            <input
+                                                type="text"
+                                                value={editingGroupName}
+                                                onChange={(e) => setEditingGroupName(e.target.value)}
+                                                onKeyPress={(e) => e.key === 'Enter' && handleSaveEdit()}
+                                                className="flex-1 px-2 py-1 bg-background border border-border rounded text-sm"
+                                                autoFocus
+                                            />
+                                            <button
+                                                onClick={handleSaveEdit}
+                                                className="p-1 text-green-600 hover:bg-green-500/10 rounded"
+                                            >
+                                                <Check size={16} />
+                                            </button>
+                                            <button
+                                                onClick={() => setEditingGroupId(null)}
+                                                className="p-1 text-muted-foreground hover:bg-muted rounded"
+                                            >
+                                                <X size={16} />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="flex items-center gap-3">
+                                                <span className="font-medium">{group}</span>
+                                                <span className="px-2 py-0.5 bg-blue-500/10 text-blue-600 rounded text-xs font-medium">
+                                                    {count} 个指标
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button
+                                                    onClick={() => handleStartEdit(group)}
+                                                    className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground"
+                                                    title="编辑"
+                                                >
+                                                    <Edit3 size={14} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteGroup(group)}
+                                                    className="p-1.5 hover:bg-red-500/10 rounded text-muted-foreground hover:text-red-600"
+                                                    title="删除"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="px-6 py-4 border-t border-border flex justify-between items-center bg-muted/30">
+                    <div className="text-xs text-muted-foreground">
+                        💡 删除分组前需确保没有指标使用该分组
+                    </div>
+                    <div className="flex gap-3">
+                        <button
+                            onClick={onClose}
+                            className="px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted rounded-lg transition-colors"
+                        >
+                            取消
+                        </button>
+                        <button
+                            onClick={handleSave}
+                            className="px-6 py-2 text-sm font-bold bg-primary text-primary-foreground rounded-lg transition-all flex items-center gap-2 shadow-md hover:shadow-lg"
+                        >
+                            <Check size={16} />
+                            保存更改
+                        </button>
+                    </div>
+                </div>
+            </motion.div>
+        </motion.div>
+    );
+}
+
 // Batch Edit Field Types
 type BatchEditField = 'businessOwner' | 'dataOwner' | 'group' | 'tags' | 'updateFrequency' | 'displayFormat';
 
@@ -497,9 +725,10 @@ interface MetricEditorProps {
     existingIds: string[];
     existingNames: string[];
     atomicMetrics: Metric[];
+    groups: string[];
 }
 
-function MetricEditor({ metric, isOpen, onClose, onSave, existingIds, existingNames, atomicMetrics }: MetricEditorProps) {
+function MetricEditor({ metric, isOpen, onClose, onSave, existingIds, existingNames, atomicMetrics, groups }: MetricEditorProps) {
     const [editingMetric, setEditingMetric] = useState<Metric>(metric || createEmptyMetric());
     const [activeSection, setActiveSection] = useState<'basic' | 'source' | 'format'>('basic');
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -770,7 +999,7 @@ function MetricEditor({ metric, isOpen, onClose, onSave, existingIds, existingNa
                                             onChange={(e) => updateField('group', e.target.value)}
                                             className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm"
                                         >
-                                            {GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
+                                            {groups.map((g: string) => <option key={g} value={g}>{g}</option>)}
                                         </select>
                                     </div>
                                     <div>
@@ -1125,7 +1354,7 @@ function MetricEditor({ metric, isOpen, onClose, onSave, existingIds, existingNa
 }
 
 // Main Component
-export default function MetricConfigPage({ metrics, onUpdateMetrics, onBack }: MetricConfigPageProps) {
+export default function MetricConfigPage({ metrics, onUpdateMetrics, onBack, embedded = false }: MetricConfigPageProps) {
     // Data source mode
     const [dataSourceMode, setDataSourceMode] = useState<MetricDataSourceMode>('excel');
     const [syncStatus, setSyncStatus] = useState<SyncStatus>({
@@ -1157,6 +1386,11 @@ export default function MetricConfigPage({ metrics, onUpdateMetrics, onBack }: M
     // Editor state
     const [editorOpen, setEditorOpen] = useState(false);
     const [editingMetric, setEditingMetric] = useState<Metric | null>(null);
+
+    // Group management state
+    const [groups, setGroups] = useState<string[]>(DEFAULT_GROUPS);
+    const [isGroupManagerOpen, setIsGroupManagerOpen] = useState(false);
+    const [newGroupName, setNewGroupName] = useState('');
 
     // File input ref
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1385,50 +1619,52 @@ export default function MetricConfigPage({ metrics, onUpdateMetrics, onBack }: M
 
     return (
         <div className="min-h-screen bg-background flex flex-col">
-            {/* Header */}
-            <header className="border-b border-border bg-card shadow-sm sticky top-0 z-30">
-                <div className="max-w-[1800px] mx-auto px-6 h-16 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <button onClick={onBack} className="p-2 hover:bg-muted rounded-full transition-colors">
-                            <ArrowLeft size={20} />
-                        </button>
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-primary/10 rounded-lg">
-                                <Database className="text-primary" size={20} />
-                            </div>
-                            <div>
-                                <h1 className="text-lg font-bold">指标元数据管理</h1>
-                                <p className="text-xs text-muted-foreground">
-                                    管理 {localMetrics.length} 个指标
-                                </p>
+            {/* Header - hidden in embedded mode */}
+            {!embedded && (
+                <header className="border-b border-border bg-card shadow-sm sticky top-0 z-30">
+                    <div className="max-w-[1800px] mx-auto px-6 h-16 flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <button onClick={onBack} className="p-2 hover:bg-muted rounded-full transition-colors">
+                                <ArrowLeft size={20} />
+                            </button>
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-primary/10 rounded-lg">
+                                    <Database className="text-primary" size={20} />
+                                </div>
+                                <div>
+                                    <h1 className="text-lg font-bold">指标元数据管理</h1>
+                                    <p className="text-xs text-muted-foreground">
+                                        管理 {localMetrics.length} 个指标
+                                    </p>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div className="flex items-center gap-3">
-                        {hasUnsavedChanges && (
-                            <span className="text-xs text-amber-500 font-medium animate-pulse flex items-center gap-1">
-                                <span className="w-2 h-2 rounded-full bg-amber-500" />
-                                有未保存的更改
-                            </span>
-                        )}
-                        <button
-                            onClick={resetChanges}
-                            disabled={!hasUnsavedChanges}
-                            className="px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted rounded-lg disabled:opacity-50 transition-colors flex items-center gap-2"
-                        >
-                            <RotateCcw size={16} /> 放弃
-                        </button>
-                        <button
-                            onClick={saveChanges}
-                            disabled={!hasUnsavedChanges}
-                            className="px-5 py-2 text-sm font-bold bg-primary text-primary-foreground rounded-lg disabled:opacity-50 transition-all shadow-md hover:shadow-lg flex items-center gap-2"
-                        >
-                            <Save size={16} /> 保存
-                        </button>
+                        <div className="flex items-center gap-3">
+                            {hasUnsavedChanges && (
+                                <span className="text-xs text-amber-500 font-medium animate-pulse flex items-center gap-1">
+                                    <span className="w-2 h-2 rounded-full bg-amber-500" />
+                                    有未保存的更改
+                                </span>
+                            )}
+                            <button
+                                onClick={resetChanges}
+                                disabled={!hasUnsavedChanges}
+                                className="px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted rounded-lg disabled:opacity-50 transition-colors flex items-center gap-2"
+                            >
+                                <RotateCcw size={16} /> 放弃
+                            </button>
+                            <button
+                                onClick={saveChanges}
+                                disabled={!hasUnsavedChanges}
+                                className="px-5 py-2 text-sm font-bold bg-primary text-primary-foreground rounded-lg disabled:opacity-50 transition-all shadow-md hover:shadow-lg flex items-center gap-2"
+                            >
+                                <Save size={16} /> 保存
+                            </button>
+                        </div>
                     </div>
-                </div>
-            </header>
+                </header>
+            )}
 
             {/* Data Source Mode Tabs */}
             <div className="border-b border-border bg-card">
@@ -1673,6 +1909,14 @@ export default function MetricConfigPage({ metrics, onUpdateMetrics, onBack }: M
                                     </button>
 
                                     <button
+                                        onClick={() => setIsGroupManagerOpen(true)}
+                                        className="px-3 py-2 border border-border rounded-lg text-sm font-medium hover:bg-muted transition-colors flex items-center gap-2"
+                                    >
+                                        <Layers size={16} />
+                                        管理分组
+                                    </button>
+
+                                    <button
                                         onClick={handleCreateMetric}
                                         className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2"
                                     >
@@ -1700,7 +1944,7 @@ export default function MetricConfigPage({ metrics, onUpdateMetrics, onBack }: M
                                                     className="px-3 py-1.5 bg-background border border-border rounded-md text-sm"
                                                 >
                                                     <option value="">全部</option>
-                                                    {uniqueGroups.map(g => <option key={g} value={g}>{g}</option>)}
+                                                    {groups.map(g => <option key={g} value={g}>{g}</option>)}
                                                 </select>
                                             </div>
                                             {filterGroup && (
@@ -1843,6 +2087,7 @@ export default function MetricConfigPage({ metrics, onUpdateMetrics, onBack }: M
                         existingIds={localMetrics.map(m => m.id)}
                         existingNames={localMetrics.map(m => m.name)}
                         atomicMetrics={localMetrics.filter(m => m.metricType !== 'calculated')}
+                        groups={groups}
                     />
                 )}
             </AnimatePresence>
@@ -1912,7 +2157,7 @@ export default function MetricConfigPage({ metrics, onUpdateMetrics, onBack }: M
                                             className="w-full px-4 py-3 bg-background border border-border rounded-lg text-sm focus:border-primary outline-none"
                                         >
                                             <option value="">选择分组</option>
-                                            {GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
+                                            {groups.map((g: string) => <option key={g} value={g}>{g}</option>)}
                                         </select>
                                     ) : null
                                 }
@@ -2016,6 +2261,19 @@ export default function MetricConfigPage({ metrics, onUpdateMetrics, onBack }: M
                             </div>
                         </motion.div>
                     </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Group Management Modal */}
+            <AnimatePresence>
+                {isGroupManagerOpen && (
+                    <GroupManagerModal
+                        isOpen={isGroupManagerOpen}
+                        onClose={() => setIsGroupManagerOpen(false)}
+                        groups={groups}
+                        onUpdateGroups={setGroups}
+                        metrics={localMetrics}
+                    />
                 )}
             </AnimatePresence>
         </div>

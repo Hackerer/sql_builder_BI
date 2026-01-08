@@ -20,8 +20,12 @@ export interface Dimension {
     group: string;
     /** Business description */
     description: string;
-    /** Whether this is a core dimension */
-    isCore: boolean;
+    /** Whether this dimension supports enumeration (finite value set) */
+    isEnumerable?: boolean;
+    /** Cached enumeration values */
+    enumValues?: string[];
+    /** Timestamp when enum values were last queried */
+    enumLastUpdated?: string;
     /** Data type */
     dataType?: DimensionDataType;
     /** Source table name */

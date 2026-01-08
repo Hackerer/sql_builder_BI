@@ -33,7 +33,8 @@ import {
     ChevronDown,
     Clock,
     LineChart as LineChartIcon,
-    Database
+    Database,
+    Check
 } from 'lucide-react';
 import {
     LineChart,
@@ -55,6 +56,7 @@ import MetricSelectorModal from './MetricSelectorModal';
 import MetricConfigPage from './MetricConfigPage';
 import TableManagementPage from './TableManagementPage';
 import DimensionManagementPage from './DimensionManagementPage';
+import UnifiedConfigPage from './UnifiedConfigPage';
 import { MOCK_DATA } from './data/mockGenerator';
 import {
     Metric as MetricType,
@@ -368,16 +370,16 @@ const INITIAL_METRICS: MetricType[] = [
 ];
 
 const METADATA_DIMS = [
-    { id: 'dt', name: '日期', group: '时间', description: '统计日期', isCore: true },
-    { id: 'city', name: '城市', group: '地域', description: '订单所属运营城市', isCore: true },
-    { id: 'supplier', name: '供应商', group: '供应链', description: '供应商名称', isCore: false },
-    { id: 'product_type', name: '服务产品类型', group: '业务', description: '五座/四座/三座商务车', isCore: false },
-    { id: 'service_type', name: '服务类型', group: '业务', description: '普通出行/接送机/接送站', isCore: true },
-    { id: 'jkc_type', name: 'JKC内外部', group: '业务', description: '内部员工/外部员工', isCore: false },
-    { id: 'cancel_type', name: '取消类型', group: '业务', description: '取消原因分类', isCore: false },
-    { id: 'cancel_stage', name: '取消阶段', group: '业务', description: '取消发生阶段', isCore: false },
-    { id: 'vehicle_usage', name: '车辆用途', group: '车辆', description: '车辆用途类型', isCore: false },
-    { id: 'asset_type', name: '资产性质', group: '车辆', description: '资产归属类型', isCore: false },
+    { id: 'dt', name: '日期', group: '时间', description: '统计日期', isEnumerable: false },
+    { id: 'city', name: '城市', group: '地域', description: '订单所属运营城市', isEnumerable: true },
+    { id: 'supplier', name: '供应商', group: '供应链', description: '供应商名称', isEnumerable: true },
+    { id: 'product_type', name: '服务产品类型', group: '业务', description: '五座/四座/三座商务车', isEnumerable: true },
+    { id: 'service_type', name: '服务类型', group: '业务', description: '普通出行/接送机/接送站', isEnumerable: true },
+    { id: 'jkc_type', name: 'JKC内外部', group: '业务', description: '内部员工/外部员工', isEnumerable: true },
+    { id: 'cancel_type', name: '取消类型', group: '业务', description: '取消原因分类', isEnumerable: true },
+    { id: 'cancel_stage', name: '取消阶段', group: '业务', description: '取消发生阶段', isEnumerable: true },
+    { id: 'vehicle_usage', name: '车辆用途', group: '车辆', description: '车辆用途类型', isEnumerable: true },
+    { id: 'asset_type', name: '资产性质', group: '车辆', description: '资产归属类型', isEnumerable: true },
 ];
 
 
@@ -415,16 +417,16 @@ export default function App() {
     const [currentView, setCurrentView] = useState<'analysis' | 'config' | 'tables' | 'dimensions'>('analysis');
     const [metricsMetadata, setMetricsMetadata] = useState<MetricType[]>(INITIAL_METRICS);
     const [dimensionsMetadata, setDimensionsMetadata] = useState<Dimension[]>([
-        { id: 'dt', name: '日期', group: '时间', description: '日期分区字段', isCore: true, dataType: 'date' },
-        { id: 'city', name: '城市', group: '地域', description: '城市维度', isCore: true, dataType: 'string' },
-        { id: 'supplier', name: '供应商', group: '业务', description: '供应商维度', isCore: false, dataType: 'string' },
-        { id: 'product_type', name: '服务产品类型', group: '业务', description: '产品类型', isCore: false, dataType: 'string' },
-        { id: 'service_type', name: '服务类型', group: '业务', description: '服务类型', isCore: true, dataType: 'string' },
-        { id: 'jkc_type', name: 'JKC内外部', group: '业务', description: 'JKC内外部', isCore: false, dataType: 'string' },
-        { id: 'cancel_type', name: '取消类型', group: '业务', description: '订单取消类型', isCore: false, dataType: 'string' },
-        { id: 'cancel_stage', name: '取消阶段', group: '业务', description: '取消发生阶段', isCore: false, dataType: 'string' },
-        { id: 'vehicle_usage', name: '车辆用途', group: '车辆', description: '车辆用途分类', isCore: false, dataType: 'string' },
-        { id: 'asset_type', name: '资产性质', group: '车辆', description: '资产性质', isCore: false, dataType: 'string' },
+        { id: 'dt', name: '日期', group: '时间', description: '日期分区字段', isEnumerable: false, dataType: 'date' },
+        { id: 'city', name: '城市', group: '地域', description: '城市维度', isEnumerable: true, enumValues: ['北京市', '广州市', '宿迁市'], dataType: 'string' },
+        { id: 'supplier', name: '供应商', group: '业务', description: '供应商维度', isEnumerable: true, enumValues: ['小马', '文远'], dataType: 'string' },
+        { id: 'product_type', name: '服务产品类型', group: '业务', description: '产品类型', isEnumerable: true, enumValues: ['五座商务车', '四座商务车', '三座商务车'], dataType: 'string' },
+        { id: 'service_type', name: '服务类型', group: '业务', description: '服务类型', isEnumerable: true, enumValues: ['普通出行', '接送机', '接送站'], dataType: 'string' },
+        { id: 'jkc_type', name: 'JKC内外部', group: '业务', description: 'JKC内外部', isEnumerable: true, enumValues: ['内部员工', '外部员工'], dataType: 'string' },
+        { id: 'cancel_type', name: '取消类型', group: '业务', description: '订单取消类型', isEnumerable: true, enumValues: ['用户取消', '司机取消', '系统取消'], dataType: 'string' },
+        { id: 'cancel_stage', name: '取消阶段', group: '业务', description: '取消发生阶段', isEnumerable: true, enumValues: ['应答前', '接驾中', '上车后'], dataType: 'string' },
+        { id: 'vehicle_usage', name: '车辆用途', group: '车辆', description: '车辆用途分类', isEnumerable: true, enumValues: ['商业运营', '测试用车', '展示用车'], dataType: 'string' },
+        { id: 'asset_type', name: '资产性质', group: '车辆', description: '资产性质', isEnumerable: true, enumValues: ['自有资产', '租赁资产', '合作方资产'], dataType: 'string' },
     ]);
 
     // --- Date Range State ---
@@ -550,12 +552,14 @@ export default function App() {
     const [showDetail, setShowDetail] = useState(false);
     const [isMetricModalOpen, setIsMetricModalOpen] = useState(false);
 
-
     // --- Filter Builder State ---
     const [isFilterBuilderOpen, setIsFilterBuilderOpen] = useState(false);
     const [newFilterDim, setNewFilterDim] = useState<string>('');
     const [newFilterOperator, setNewFilterOperator] = useState<'IN' | 'NOT_IN'>('IN');
     const [newFilterValues, setNewFilterValues] = useState<string[]>([]);
+    // Pending filters list (filters added but not confirmed yet)
+    const [pendingFilters, setPendingFilters] = useState<QueryFilter[]>([]);
+
 
     // --- Hour Filter State (Advanced) ---
     const [isHourFilterOpen, setIsHourFilterOpen] = useState(false);
@@ -1118,7 +1122,8 @@ export default function App() {
     };
 
     // --- Filter Management ---
-    const addFilter = () => {
+    // Add current form filter to pending list
+    const addToPendingList = () => {
         if (!newFilterDim || newFilterValues.length === 0) return;
 
         const newFilter: QueryFilter = {
@@ -1128,11 +1133,25 @@ export default function App() {
             values: newFilterValues
         };
 
+        setPendingFilters(prev => [...prev, newFilter]);
+        
+        // Reset form for next filter
+        setNewFilterDim('');
+        setNewFilterOperator('IN');
+        setNewFilterValues([]);
+    };
+
+    // Remove filter from pending list
+    const removeFromPendingList = (filterId: string) => {
+        setPendingFilters(prev => prev.filter(f => f.id !== filterId));
+    };
+
+    // Confirm and close: add all pending filters to query
+    const confirmAllFilters = () => {
         setQuery(prev => ({
             ...prev,
-            filters: [...prev.filters, newFilter]
+            filters: [...prev.filters, ...pendingFilters]
         }));
-
         resetFilterBuilder();
     };
 
@@ -1148,6 +1167,7 @@ export default function App() {
         setNewFilterDim('');
         setNewFilterOperator('IN');
         setNewFilterValues([]);
+        setPendingFilters([]);
     };
 
     const toggleFilterValue = (value: string) => {
@@ -1161,13 +1181,31 @@ export default function App() {
     // Get dimension name by ID
     const getDimName = (dimId: string) => METADATA_DIMS.find(d => d.id === dimId)?.name || dimId;
 
-    // If config view is active
+    // If config view is active - use unified config page
     if (currentView === 'config') {
         return (
-            <MetricConfigPage
+            <UnifiedConfigPage
+                onBack={() => setCurrentView('analysis')}
                 metrics={metricsMetadata}
                 onUpdateMetrics={setMetricsMetadata}
-                onBack={() => setCurrentView('analysis')}
+                dimensions={dimensionsMetadata}
+                onUpdateDimensions={setDimensionsMetadata}
+                onImportMetrics={(newMetrics) => {
+                    setMetricsMetadata(prev => {
+                        const existingIds = new Set(prev.map(m => m.id));
+                        const toAdd = newMetrics.filter(m => !existingIds.has(m.id));
+                        return [...prev, ...toAdd];
+                    });
+                }}
+                onImportDimensions={(newDimensions) => {
+                    setDimensionsMetadata(prev => {
+                        const existingIds = new Set(prev.map(d => d.id));
+                        const toAdd = newDimensions.filter(d => !existingIds.has(d.id));
+                        return [...prev, ...toAdd];
+                    });
+                }}
+                existingMetricIds={metricsMetadata.map(m => m.id)}
+                existingDimensionIds={dimensionsMetadata.map(d => d.id)}
             />
         );
     }
@@ -1335,7 +1373,7 @@ export default function App() {
                                 {/* Dimensions */}
                                 <div className="col-span-12 lg:col-span-5 space-y-4">
                                     <div className="flex items-center justify-between mb-3">
-                                        <label className="text-base font-bold text-foreground">选择维度</label>
+                                        <label className="text-base font-bold text-foreground">选择维度 (GROUP BY)</label>
                                     </div>
 
                                     {/* Time Granularity - Single Select */}
@@ -1388,7 +1426,6 @@ export default function App() {
                                                             )}
                                                         >
                                                             {dim.name}
-                                                            {dim.isCore && !query.dims.includes(dim.id) && <span className="w-1.5 h-1.5 rounded-full bg-orange-400" title="核心维度"></span>}
                                                         </button>
                                                         {/* Hover Tooltip */}
                                                         <div className="absolute left-0 top-full mt-2 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none">
@@ -1423,7 +1460,7 @@ export default function App() {
                                 {/* Metrics */}
                                 <div className="col-span-12 lg:col-span-6 space-y-4">
                                     <div className="flex items-center justify-between mb-2">
-                                        <label className="text-base font-bold text-foreground">选择指标</label>
+                                        <label className="text-base font-bold text-foreground">选择指标 (SELECT)</label>
                                         <button
                                             onClick={() => setIsMetricModalOpen(true)}
                                             className="text-xs px-3 py-1 bg-primary/10 text-primary rounded-md hover:bg-primary/20 transition-colors flex items-center gap-1 font-medium"
@@ -1756,8 +1793,7 @@ export default function App() {
                                         </div>
                                     ))}
                                 </div>
-                            )
-                            }
+                            )}
 
                             {/* Hour Filter Picker (Advanced) */}
                             {
@@ -1954,10 +1990,53 @@ export default function App() {
                                 )
                             }
 
-                            {/* Filter Builder (Expanded) */}
+                            {/* Filter Builder (Modal with Batch Support) */}
                             {
                                 isFilterBuilderOpen && (
-                                    <div className="border border-dashed border-primary/30 rounded-xl p-4 bg-primary/5 space-y-4">
+                                    <div className="border border-dashed border-primary/30 rounded-xl p-6 bg-primary/5 space-y-6">
+                                        {/* Pending Filters List */}
+                                        {pendingFilters.length > 0 && (
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-bold text-muted-foreground flex items-center gap-2">
+                                                    <Filter size={14} />
+                                                    待提交的筛选条件 ({pendingFilters.length})
+                                                </label>
+                                                <div className="space-y-2 p-3 bg-background/50 rounded-lg border border-border">
+                                                    {pendingFilters.map(filter => (
+                                                        <div
+                                                            key={filter.id}
+                                                            className="flex items-center gap-2 px-3 py-2 bg-secondary/50 border border-border rounded-lg text-sm group"
+                                                        >
+                                                            <span className="font-medium text-foreground">{getDimName(filter.dimId)}</span>
+                                                            <span className={cn(
+                                                                "px-1.5 py-0.5 rounded text-[10px] font-bold uppercase",
+                                                                filter.operator === 'IN'
+                                                                    ? "bg-green-500/10 text-green-600 border border-green-500/20"
+                                                                    : "bg-orange-500/10 text-orange-600 border border-orange-500/20"
+                                                            )}>
+                                                                {filter.operator === 'IN' ? 'IN' : 'NOT IN'}
+                                                            </span>
+                                                            <span className="text-muted-foreground flex-1">
+                                                                ({filter.values.join(', ')})
+                                                            </span>
+                                                            <button
+                                                                onClick={() => removeFromPendingList(filter.id)}
+                                                                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-destructive/10 rounded transition-all"
+                                                            >
+                                                                <X size={14} className="text-muted-foreground hover:text-destructive" />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Divider */}
+                                        {pendingFilters.length > 0 && (
+                                            <div className="border-t border-border/50"></div>
+                                        )}
+
+                                        {/* Add New Filter Form */}
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                             {/* Step 1: Select Dimension */}
                                             <div className="space-y-2">
@@ -2033,6 +2112,18 @@ export default function App() {
                                             </div>
                                         </div>
 
+                                        {/* Add to List Button */}
+                                        <div className="flex justify-center">
+                                            <button
+                                                onClick={addToPendingList}
+                                                disabled={!newFilterDim || newFilterValues.length === 0}
+                                                className="px-6 py-2.5 text-sm font-bold bg-primary text-primary-foreground rounded-lg shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+                                            >
+                                                <Plus size={16} />
+                                                添加到列表
+                                            </button>
+                                        </div>
+
                                         {/* Actions */}
                                         <div className="flex justify-end gap-2 pt-2 border-t border-border/50">
                                             <button
@@ -2042,11 +2133,12 @@ export default function App() {
                                                 取消
                                             </button>
                                             <button
-                                                onClick={addFilter}
-                                                disabled={!newFilterDim || newFilterValues.length === 0}
-                                                className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                                onClick={confirmAllFilters}
+                                                disabled={pendingFilters.length === 0}
+                                                className="px-6 py-2 text-sm font-bold bg-primary text-primary-foreground rounded-lg shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
                                             >
-                                                确认添加
+                                                <Check size={16} />
+                                                确认并关闭 {pendingFilters.length > 0 && `(${pendingFilters.length})`}
                                             </button>
                                         </div>
                                     </div>

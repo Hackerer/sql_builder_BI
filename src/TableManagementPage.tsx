@@ -77,6 +77,7 @@ interface TableManagementPageProps {
     onImportDimensions: (dimensions: Dimension[]) => void;
     existingMetricIds: string[];
     existingDimensionIds: string[];
+    embedded?: boolean;  // When true, hide the page header (used in unified config page)
 }
 
 // Classification button component
@@ -147,7 +148,8 @@ export default function TableManagementPage({
     onImportMetrics,
     onImportDimensions,
     existingMetricIds,
-    existingDimensionIds
+    existingDimensionIds,
+    embedded = false
 }: TableManagementPageProps) {
     // View state: list (default) or wizard
     const [viewMode, setViewMode] = useState<'list' | 'wizard'>('list');
@@ -282,7 +284,8 @@ export default function TableManagementPage({
             name: f.displayName || f.comment || f.fieldName,
             group: f.isPartition ? '时间' : '业务',
             description: f.comment,
-            isCore: f.isPartition,
+            isEnumerable: !f.isPartition, // Non-partition fields are typically enumerable
+            enumValues: [],
             dataType: f.dataTypeCategory === 'numeric' ? 'number' as const :
                 f.dataTypeCategory === 'datetime' ? 'date' as const :
                     f.dataTypeCategory === 'boolean' ? 'boolean' as const : 'string' as const,
@@ -362,35 +365,37 @@ export default function TableManagementPage({
     if (viewMode === 'list') {
         return (
             <div className="min-h-screen bg-[#f5f7fa] flex flex-col">
-                {/* Header */}
-                <header className="border-b border-border bg-card shadow-sm sticky top-0 z-30">
-                    <div className="max-w-[1600px] mx-auto px-6 h-16 flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <button onClick={onBack} className="p-2 hover:bg-muted rounded-full transition-colors">
-                                <ArrowLeft size={20} />
-                            </button>
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-green-500/10 rounded-lg">
-                                    <Table2 className="text-green-600" size={20} />
-                                </div>
-                                <div>
-                                    <h1 className="text-lg font-bold">表模型管理</h1>
-                                    <p className="text-xs text-muted-foreground">
-                                        管理 {importedTables.length} 个表模型 · 解析物理表结构，一键生成指标与维度
-                                    </p>
+                {/* Header - hidden in embedded mode */}
+                {!embedded && (
+                    <header className="border-b border-border bg-card shadow-sm sticky top-0 z-30">
+                        <div className="max-w-[1600px] mx-auto px-6 h-16 flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <button onClick={onBack} className="p-2 hover:bg-muted rounded-full transition-colors">
+                                    <ArrowLeft size={20} />
+                                </button>
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-green-500/10 rounded-lg">
+                                        <Table2 className="text-green-600" size={20} />
+                                    </div>
+                                    <div>
+                                        <h1 className="text-lg font-bold">表模型管理</h1>
+                                        <p className="text-xs text-muted-foreground">
+                                            管理 {importedTables.length} 个表模型 · 解析物理表结构，一键生成指标与维度
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <button
-                            onClick={handleAddNewTable}
-                            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2"
-                        >
-                            <Plus size={18} />
-                            导入新表
-                        </button>
-                    </div>
-                </header>
+                            <button
+                                onClick={handleAddNewTable}
+                                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2"
+                            >
+                                <Plus size={18} />
+                                导入新表
+                            </button>
+                        </div>
+                    </header>
+                )}
 
                 {/* Main Content - Table List */}
                 <main className="flex-1 p-6 max-w-[1600px] mx-auto w-full">
@@ -406,8 +411,20 @@ export default function TableManagementPage({
                                 className="w-full pl-10 pr-4 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                             />
                         </div>
-                        <div className="text-sm text-muted-foreground">
-                            共 {filteredTables.length} 个表模型
+                        <div className="flex items-center gap-4">
+                            <div className="text-sm text-muted-foreground">
+                                共 {filteredTables.length} 个表模型
+                            </div>
+                            {/* Show "Add New Table" button in embedded mode */}
+                            {embedded && (
+                                <button
+                                    onClick={handleAddNewTable}
+                                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2"
+                                >
+                                    <Plus size={18} />
+                                    导入新表
+                                </button>
+                            )}
                         </div>
                     </div>
 
@@ -464,7 +481,7 @@ export default function TableManagementPage({
                                                     table.status === 'imported' && "bg-blue-500/10 text-blue-600"
                                                 )}>
                                                     {table.status === 'published' ? '已发布' :
-                                                     table.status === 'draft' ? '草稿' : '已导入'}
+                                                        table.status === 'draft' ? '草稿' : '已导入'}
                                                 </span>
                                             </td>
                                             <td className="px-4 py-4 text-muted-foreground text-xs">
@@ -553,58 +570,60 @@ export default function TableManagementPage({
     // --- WIZARD VIEW ---
     return (
         <div className="min-h-screen bg-[#f5f7fa] flex flex-col">
-            {/* Header */}
-            <header className="border-b border-border bg-card shadow-sm sticky top-0 z-30">
-                <div className="max-w-[1600px] mx-auto px-6 h-16 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <button onClick={handleBackToList} className="p-2 hover:bg-muted rounded-full transition-colors">
-                            <ArrowLeft size={20} />
-                        </button>
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-green-500/10 rounded-lg">
-                                <Table2 className="text-green-600" size={20} />
-                            </div>
-                            <div>
-                                <h1 className="text-lg font-bold">
-                                    {editingTableId ? '编辑表映射' : '导入新表'}
-                                </h1>
-                                <p className="text-xs text-muted-foreground">
-                                    解析物理表结构，一键生成指标与维度
-                                </p>
+            {/* Header - hidden in embedded mode */}
+            {!embedded && (
+                <header className="border-b border-border bg-card shadow-sm sticky top-0 z-30">
+                    <div className="max-w-[1600px] mx-auto px-6 h-16 flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <button onClick={handleBackToList} className="p-2 hover:bg-muted rounded-full transition-colors">
+                                <ArrowLeft size={20} />
+                            </button>
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-green-500/10 rounded-lg">
+                                    <Table2 className="text-green-600" size={20} />
+                                </div>
+                                <div>
+                                    <h1 className="text-lg font-bold">
+                                        {editingTableId ? '编辑表映射' : '导入新表'}
+                                    </h1>
+                                    <p className="text-xs text-muted-foreground">
+                                        解析物理表结构，一键生成指标与维度
+                                    </p>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Step indicator */}
-                    <div className="flex items-center gap-2">
-                        {[
-                            { id: 'input', label: '粘贴DDL', icon: FileText },
-                            { id: 'configure', label: '配置映射', icon: Settings2 },
-                            { id: 'confirm', label: '确认导入', icon: Check },
-                        ].map((step, idx) => (
-                            <React.Fragment key={step.id}>
-                                {idx > 0 && <ChevronRight size={16} className="text-muted-foreground" />}
-                                <div className={cn(
-                                    "flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all",
-                                    currentStep === step.id
-                                        ? "bg-primary text-primary-foreground"
-                                        : (currentStep === 'confirm' && step.id !== 'confirm') ||
-                                        (currentStep === 'configure' && step.id === 'input')
-                                            ? "bg-green-100 text-green-700"
-                                            : "bg-muted text-muted-foreground"
-                                )}>
-                                    {((currentStep === 'confirm' && step.id !== 'confirm') ||
-                                        (currentStep === 'configure' && step.id === 'input'))
-                                        ? <CheckCircle size={14} />
-                                        : <step.icon size={14} />
-                                    }
-                                    {step.label}
-                                </div>
-                            </React.Fragment>
-                        ))}
+                        {/* Step indicator */}
+                        <div className="flex items-center gap-2">
+                            {[
+                                { id: 'input', label: '粘贴DDL', icon: FileText },
+                                { id: 'configure', label: '配置映射', icon: Settings2 },
+                                { id: 'confirm', label: '确认导入', icon: Check },
+                            ].map((step, idx) => (
+                                <React.Fragment key={step.id}>
+                                    {idx > 0 && <ChevronRight size={16} className="text-muted-foreground" />}
+                                    <div className={cn(
+                                        "flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all",
+                                        currentStep === step.id
+                                            ? "bg-primary text-primary-foreground"
+                                            : (currentStep === 'confirm' && step.id !== 'confirm') ||
+                                                (currentStep === 'configure' && step.id === 'input')
+                                                ? "bg-green-100 text-green-700"
+                                                : "bg-muted text-muted-foreground"
+                                    )}>
+                                        {((currentStep === 'confirm' && step.id !== 'confirm') ||
+                                            (currentStep === 'configure' && step.id === 'input'))
+                                            ? <CheckCircle size={14} />
+                                            : <step.icon size={14} />
+                                        }
+                                        {step.label}
+                                    </div>
+                                </React.Fragment>
+                            ))}
+                        </div>
                     </div>
-                </div>
-            </header>
+                </header>
+            )}
 
             {/* Main Content */}
             <main className="flex-1 p-6 max-w-[1600px] mx-auto w-full">

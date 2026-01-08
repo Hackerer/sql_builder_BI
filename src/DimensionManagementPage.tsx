@@ -18,6 +18,7 @@ interface DimensionManagementPageProps {
     dimensions: Dimension[];
     onUpdateDimensions: (newDimensions: Dimension[]) => void;
     onBack: () => void;
+    embedded?: boolean;  // When true, hide the page header (used in unified config page)
 }
 
 // Dimension groups
@@ -44,12 +45,240 @@ const createEmptyDimension = (): Dimension => ({
     name: '',
     group: '业务',
     description: '',
-    isCore: false,
+    isEnumerable: false,
+    enumValues: [],
     dataType: 'string',
     status: 'draft',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
 });
+
+// Group Manager Modal Component
+interface GroupManagerModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    groups: string[];
+    onUpdateGroups: (groups: string[]) => void;
+    dimensions: Dimension[];
+}
+
+function GroupManagerModal({ isOpen, onClose, groups, onUpdateGroups, dimensions }: GroupManagerModalProps) {
+    const [localGroups, setLocalGroups] = useState<string[]>(groups);
+    const [newGroupName, setNewGroupName] = useState('');
+    const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
+    const [editingGroupName, setEditingGroupName] = useState('');
+
+    React.useEffect(() => {
+        setLocalGroups(groups);
+    }, [groups, isOpen]);
+
+    // Calculate dimension count for each group
+    const getGroupDimensionCount = (group: string) => {
+        return dimensions.filter(d => d.group === group).length;
+    };
+
+    // Add new group
+    const handleAddGroup = () => {
+        const trimmed = newGroupName.trim();
+        if (!trimmed) return;
+        if (localGroups.includes(trimmed)) {
+            alert('分组名称已存在');
+            return;
+        }
+        setLocalGroups([...localGroups, trimmed]);
+        setNewGroupName('');
+    };
+
+    // Delete group
+    const handleDeleteGroup = (group: string) => {
+        const count = getGroupDimensionCount(group);
+        if (count > 0) {
+            alert(`无法删除分组"${group}"，因为还有 ${count} 个维度使用此分组`);
+            return;
+        }
+        if (window.confirm(`确定要删除分组"${group}"吗？`)) {
+            setLocalGroups(localGroups.filter(g => g !== group));
+        }
+    };
+
+    // Start editing group
+    const handleStartEdit = (group: string) => {
+        setEditingGroupId(group);
+        setEditingGroupName(group);
+    };
+
+    // Save edit
+    const handleSaveEdit = () => {
+        const trimmed = editingGroupName.trim();
+        if (!trimmed) return;
+        if (trimmed !== editingGroupId && localGroups.includes(trimmed)) {
+            alert('分组名称已存在');
+            return;
+        }
+        const newGroups = localGroups.map(g => g === editingGroupId ? trimmed : g);
+        setLocalGroups(newGroups);
+        setEditingGroupId(null);
+        setEditingGroupName('');
+    };
+
+    // Save all changes
+    const handleSave = () => {
+        onUpdateGroups(localGroups);
+        onClose();
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={onClose}
+        >
+            <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-card border border-border rounded-2xl shadow-2xl w-[600px] max-h-[80vh] overflow-hidden flex flex-col"
+            >
+                {/* Header */}
+                <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/30">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-purple-500/10 text-purple-600">
+                            <Layers size={20} />
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-lg">管理维度分组</h3>
+                            <p className="text-xs text-muted-foreground">
+                                创建、编辑或删除维度分组
+                            </p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-muted rounded-full">
+                        <X size={20} />
+                    </button>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                    {/* Add new group */}
+                    <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl">
+                        <label className="text-sm font-medium mb-2 block">添加新分组</label>
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                value={newGroupName}
+                                onChange={(e) => setNewGroupName(e.target.value)}
+                                onKeyPress={(e) => e.key === 'Enter' && handleAddGroup()}
+                                placeholder="输入分组名称..."
+                                className="flex-1 px-3 py-2 bg-background border border-border rounded-lg text-sm"
+                            />
+                            <button
+                                onClick={handleAddGroup}
+                                disabled={!newGroupName.trim()}
+                                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium disabled:opacity-50 flex items-center gap-2"
+                            >
+                                <Plus size={16} />
+                                添加
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Group list */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium">现有分组 ({localGroups.length})</label>
+                        {localGroups.map(group => {
+                            const count = getGroupDimensionCount(group);
+                            const isEditing = editingGroupId === group;
+
+                            return (
+                                <div
+                                    key={group}
+                                    className="flex items-center justify-between p-3 bg-secondary/50 border border-border rounded-lg group hover:bg-secondary transition-colors"
+                                >
+                                    {isEditing ? (
+                                        <div className="flex-1 flex items-center gap-2">
+                                            <input
+                                                type="text"
+                                                value={editingGroupName}
+                                                onChange={(e) => setEditingGroupName(e.target.value)}
+                                                onKeyPress={(e) => e.key === 'Enter' && handleSaveEdit()}
+                                                className="flex-1 px-2 py-1 bg-background border border-border rounded text-sm"
+                                                autoFocus
+                                            />
+                                            <button
+                                                onClick={handleSaveEdit}
+                                                className="p-1 text-green-600 hover:bg-green-500/10 rounded"
+                                            >
+                                                <Check size={16} />
+                                            </button>
+                                            <button
+                                                onClick={() => setEditingGroupId(null)}
+                                                className="p-1 text-muted-foreground hover:bg-muted rounded"
+                                            >
+                                                <X size={16} />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="flex items-center gap-3">
+                                                <span className="font-medium">{group}</span>
+                                                <span className="px-2 py-0.5 bg-purple-500/10 text-purple-600 rounded text-xs font-medium">
+                                                    {count} 个维度
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button
+                                                    onClick={() => handleStartEdit(group)}
+                                                    className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground"
+                                                    title="编辑"
+                                                >
+                                                    <Edit3 size={14} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteGroup(group)}
+                                                    className="p-1.5 hover:bg-red-500/10 rounded text-muted-foreground hover:text-red-600"
+                                                    title="删除"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="px-6 py-4 border-t border-border flex justify-between items-center bg-muted/30">
+                    <div className="text-xs text-muted-foreground">
+                        💡 删除分组前需确保没有维度使用该分组
+                    </div>
+                    <div className="flex gap-3">
+                        <button
+                            onClick={onClose}
+                            className="px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted rounded-lg transition-colors"
+                        >
+                            取消
+                        </button>
+                        <button
+                            onClick={handleSave}
+                            className="px-6 py-2 text-sm font-bold bg-primary text-primary-foreground rounded-lg transition-all flex items-center gap-2 shadow-md hover:shadow-lg"
+                        >
+                            <Check size={16} />
+                            保存更改
+                        </button>
+                    </div>
+                </div>
+            </motion.div>
+        </motion.div>
+    );
+}
 
 // Dimension Editor Modal
 interface DimensionEditorProps {
@@ -58,9 +287,10 @@ interface DimensionEditorProps {
     onClose: () => void;
     onSave: (dimension: Dimension) => void;
     existingIds: string[];
+    groups: string[];
 }
 
-function DimensionEditor({ dimension, isOpen, onClose, onSave, existingIds }: DimensionEditorProps) {
+function DimensionEditor({ dimension, isOpen, onClose, onSave, existingIds, groups }: DimensionEditorProps) {
     const [editingDimension, setEditingDimension] = useState<Dimension>(dimension || createEmptyDimension());
     const [errors, setErrors] = useState<Record<string, string>>({});
     const isNew = !dimension;
@@ -198,7 +428,7 @@ function DimensionEditor({ dimension, isOpen, onClose, onSave, existingIds }: Di
                                 onChange={(e) => updateField('group', e.target.value)}
                                 className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm"
                             >
-                                {DIMENSION_GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
+                                {groups.map(g => <option key={g} value={g}>{g}</option>)}
                             </select>
                         </div>
                         <div>
@@ -272,17 +502,81 @@ function DimensionEditor({ dimension, isOpen, onClose, onSave, existingIds }: Di
                         />
                     </div>
 
-                    {/* Options */}
-                    <div className="flex items-center gap-6">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={editingDimension.isCore}
-                                onChange={(e) => updateField('isCore', e.target.checked)}
-                                className="w-4 h-4 rounded border-border text-primary"
-                            />
-                            <span className="text-sm font-medium">核心维度</span>
+                    {/* Enumeration Options */}
+                    <div className="space-y-4 p-4 bg-muted/30 rounded-xl border border-border">
+                        <label className="flex items-center gap-3 cursor-pointer">
+                            <div className="relative">
+                                <input
+                                    type="checkbox"
+                                    checked={editingDimension.isEnumerable || false}
+                                    onChange={(e) => updateField('isEnumerable', e.target.checked)}
+                                    className="sr-only peer"
+                                />
+                                <div className="w-11 h-6 bg-muted rounded-full peer-checked:bg-primary transition-colors"></div>
+                                <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full peer-checked:translate-x-5 transition-transform"></div>
+                            </div>
+                            <div>
+                                <span className="text-sm font-medium">可枚举维度</span>
+                                <p className="text-xs text-muted-foreground">启用后可管理维度的有限值集</p>
+                            </div>
                         </label>
+
+                        {/* Enumeration Value Management */}
+                        {editingDimension.isEnumerable && (
+                            <div className="space-y-3 pt-3 border-t border-border">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-sm font-medium">枚举值管理</label>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            // Simulate one-click query for latest values
+                                            const mockValues = [
+                                                `值1_${editingDimension.id}`,
+                                                `值2_${editingDimension.id}`,
+                                                `值3_${editingDimension.id}`
+                                            ];
+                                            updateField('enumValues', mockValues);
+                                            updateField('enumLastUpdated', new Date().toISOString());
+                                        }}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-600 bg-purple-500/10 hover:bg-purple-500/20 rounded-lg transition-colors"
+                                    >
+                                        <RefreshCcw size={12} />
+                                        一键查询最新值
+                                    </button>
+                                </div>
+
+                                {/* Enum Values Display */}
+                                <div className="flex flex-wrap gap-2">
+                                    {(editingDimension.enumValues || []).map((value, idx) => (
+                                        <span
+                                            key={idx}
+                                            className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-background border border-border rounded-lg text-sm group"
+                                        >
+                                            {value}
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const newValues = (editingDimension.enumValues || []).filter((_, i) => i !== idx);
+                                                    updateField('enumValues', newValues);
+                                                }}
+                                                className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all"
+                                            >
+                                                <X size={12} />
+                                            </button>
+                                        </span>
+                                    ))}
+                                    {(editingDimension.enumValues || []).length === 0 && (
+                                        <span className="text-xs text-muted-foreground italic">暂无枚举值，点击“一键查询最新值”获取</span>
+                                    )}
+                                </div>
+
+                                {editingDimension.enumLastUpdated && (
+                                    <div className="text-xs text-muted-foreground">
+                                        最后更新: {new Date(editingDimension.enumLastUpdated).toLocaleString('zh-CN')}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -315,7 +609,8 @@ function DimensionEditor({ dimension, isOpen, onClose, onSave, existingIds }: Di
 export default function DimensionManagementPage({
     dimensions,
     onUpdateDimensions,
-    onBack
+    onBack,
+    embedded = false
 }: DimensionManagementPageProps) {
     // Core state
     const [localDimensions, setLocalDimensions] = useState<Dimension[]>(JSON.parse(JSON.stringify(dimensions)));
@@ -333,6 +628,10 @@ export default function DimensionManagementPage({
     // Editor state
     const [editorOpen, setEditorOpen] = useState(false);
     const [editingDimension, setEditingDimension] = useState<Dimension | null>(null);
+
+    // Group management state
+    const [groups, setGroups] = useState<string[]>(DIMENSION_GROUPS);
+    const [isGroupManagerOpen, setIsGroupManagerOpen] = useState(false);
 
     // Computed values
     const filteredDimensions = useMemo(() => {
@@ -446,50 +745,52 @@ export default function DimensionManagementPage({
 
     return (
         <div className="min-h-screen bg-[#f5f7fa] flex flex-col">
-            {/* Header */}
-            <header className="border-b border-border bg-card shadow-sm sticky top-0 z-30">
-                <div className="max-w-[1800px] mx-auto px-6 h-16 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <button onClick={onBack} className="p-2 hover:bg-muted rounded-full transition-colors">
-                            <ArrowLeft size={20} />
-                        </button>
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-purple-500/10 rounded-lg">
-                                <Hash className="text-purple-600" size={20} />
-                            </div>
-                            <div>
-                                <h1 className="text-lg font-bold">维度管理</h1>
-                                <p className="text-xs text-muted-foreground">
-                                    管理 {localDimensions.length} 个维度
-                                </p>
+            {/* Header - hidden in embedded mode */}
+            {!embedded && (
+                <header className="border-b border-border bg-card shadow-sm sticky top-0 z-30">
+                    <div className="max-w-[1800px] mx-auto px-6 h-16 flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <button onClick={onBack} className="p-2 hover:bg-muted rounded-full transition-colors">
+                                <ArrowLeft size={20} />
+                            </button>
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-purple-500/10 rounded-lg">
+                                    <Hash className="text-purple-600" size={20} />
+                                </div>
+                                <div>
+                                    <h1 className="text-lg font-bold">维度管理</h1>
+                                    <p className="text-xs text-muted-foreground">
+                                        管理 {localDimensions.length} 个维度
+                                    </p>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div className="flex items-center gap-3">
-                        {hasUnsavedChanges && (
-                            <span className="text-xs text-amber-500 font-medium animate-pulse flex items-center gap-1">
-                                <span className="w-2 h-2 rounded-full bg-amber-500" />
-                                有未保存的更改
-                            </span>
-                        )}
-                        <button
-                            onClick={resetChanges}
-                            disabled={!hasUnsavedChanges}
-                            className="px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted rounded-lg disabled:opacity-50 transition-colors flex items-center gap-2"
-                        >
-                            <RefreshCcw size={16} /> 放弃
-                        </button>
-                        <button
-                            onClick={saveChanges}
-                            disabled={!hasUnsavedChanges}
-                            className="px-5 py-2 text-sm font-bold bg-primary text-primary-foreground rounded-lg disabled:opacity-50 transition-all shadow-md hover:shadow-lg flex items-center gap-2"
-                        >
-                            <Save size={16} /> 保存
-                        </button>
+                        <div className="flex items-center gap-3">
+                            {hasUnsavedChanges && (
+                                <span className="text-xs text-amber-500 font-medium animate-pulse flex items-center gap-1">
+                                    <span className="w-2 h-2 rounded-full bg-amber-500" />
+                                    有未保存的更改
+                                </span>
+                            )}
+                            <button
+                                onClick={resetChanges}
+                                disabled={!hasUnsavedChanges}
+                                className="px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted rounded-lg disabled:opacity-50 transition-colors flex items-center gap-2"
+                            >
+                                <RefreshCcw size={16} /> 放弃
+                            </button>
+                            <button
+                                onClick={saveChanges}
+                                disabled={!hasUnsavedChanges}
+                                className="px-5 py-2 text-sm font-bold bg-primary text-primary-foreground rounded-lg disabled:opacity-50 transition-all shadow-md hover:shadow-lg flex items-center gap-2"
+                            >
+                                <Save size={16} /> 保存
+                            </button>
+                        </div>
                     </div>
-                </div>
-            </header>
+                </header>
+            )}
 
             {/* Batch Action Bar */}
             <AnimatePresence>
@@ -550,13 +851,23 @@ export default function DimensionManagementPage({
                         </button>
                     </div>
 
-                    <button
-                        onClick={handleCreateDimension}
-                        className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2"
-                    >
-                        <Plus size={16} />
-                        新建维度
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setIsGroupManagerOpen(true)}
+                            className="px-3 py-2 border border-border rounded-lg text-sm font-medium hover:bg-muted transition-colors flex items-center gap-2"
+                        >
+                            <Layers size={16} />
+                            管理分组
+                        </button>
+
+                        <button
+                            onClick={handleCreateDimension}
+                            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2"
+                        >
+                            <Plus size={16} />
+                            新建维度
+                        </button>
+                    </div>
                 </div>
 
                 {/* Filter Panel */}
@@ -627,7 +938,7 @@ export default function DimensionManagementPage({
                                     <th className="px-4 py-4 w-24">分组</th>
                                     <th className="px-4 py-4 w-24">数据类型</th>
                                     <th className="px-4 py-4 w-40">来源表</th>
-                                    <th className="px-4 py-4 w-24">核心</th>
+                                    <th className="px-4 py-4 w-24">可枚举</th>
                                     <th className="px-4 py-4">描述</th>
                                     <th className="px-4 py-4 w-20">操作</th>
                                 </tr>
@@ -672,10 +983,12 @@ export default function DimensionManagementPage({
                                                 )}
                                             </td>
                                             <td className="px-4 py-4">
-                                                {dimension.isCore && (
-                                                    <span className="px-2 py-0.5 bg-amber-500/10 text-amber-600 rounded text-xs font-medium">
-                                                        核心
+                                                {dimension.isEnumerable ? (
+                                                    <span className="px-2 py-0.5 bg-green-500/10 text-green-600 rounded text-xs font-medium">
+                                                        可枚举 ({(dimension.enumValues || []).length})
                                                     </span>
+                                                ) : (
+                                                    <span className="text-muted-foreground text-xs">-</span>
                                                 )}
                                             </td>
                                             <td className="px-4 py-4 text-muted-foreground text-xs max-w-[200px] truncate">
@@ -717,6 +1030,20 @@ export default function DimensionManagementPage({
                         onClose={() => setEditorOpen(false)}
                         onSave={handleSaveDimension}
                         existingIds={localDimensions.map(d => d.id)}
+                        groups={groups}
+                    />
+                )}
+            </AnimatePresence>
+
+            {/* Group Manager Modal */}
+            <AnimatePresence>
+                {isGroupManagerOpen && (
+                    <GroupManagerModal
+                        isOpen={isGroupManagerOpen}
+                        onClose={() => setIsGroupManagerOpen(false)}
+                        groups={groups}
+                        onUpdateGroups={setGroups}
+                        dimensions={localDimensions}
                     />
                 )}
             </AnimatePresence>
