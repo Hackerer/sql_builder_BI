@@ -51,13 +51,15 @@ import {
     Legend
 } from 'recharts';
 import { cn } from './lib/utils';
-import { format, subDays, startOfWeek, endOfWeek, parseISO, startOfMonth, formatISO, subHours, subWeeks, subMonths, getWeekOfMonth } from 'date-fns';
+import { format, subDays, startOfWeek, endOfWeek, parseISO, startOfMonth, formatISO, subHours, subWeeks, subMonths, getWeekOfMonth, addMonths, endOfMonth, eachDayOfInterval, getDay, isWithinInterval, isSameDay } from 'date-fns';
+import { zhCN } from 'date-fns/locale';
 import MetricSelectorModal from './MetricSelectorModal';
 import MetricConfigPage from './MetricConfigPage';
 import TableManagementPage from './TableManagementPage';
 import DimensionManagementPage from './DimensionManagementPage';
 import UnifiedConfigPage from './UnifiedConfigPage';
 import { MOCK_DATA } from './data/mockGenerator';
+import { DualMonthCalendar } from './components/common/DualMonthCalendar';
 import {
     Metric as MetricType,
     Dimension,
@@ -440,6 +442,58 @@ export default function App() {
         preset: 'last7'
     });
     const [showDatePicker, setShowDatePicker] = useState(false);
+    
+    // Temporary date selection state for main date picker
+    const [tempStartDate, setTempStartDate] = useState<Date | null>(null);
+    const [tempEndDate, setTempEndDate] = useState<Date | null>(null);
+    
+    // Handle date click in calendar
+    const handleMainDateClick = (date: Date) => {
+        if (!tempStartDate || (tempStartDate && tempEndDate)) {
+            // Start new selection
+            setTempStartDate(date);
+            setTempEndDate(null);
+        } else {
+            // Complete the range
+            if (date < tempStartDate) {
+                setTempEndDate(tempStartDate);
+                setTempStartDate(date);
+            } else {
+                setTempEndDate(date);
+            }
+        }
+    };
+    
+    // Confirm main date selection
+    const confirmMainDateSelection = () => {
+        if (tempStartDate && tempEndDate) {
+            setDateRange({
+                startDate: tempStartDate,
+                endDate: tempEndDate,
+                preset: 'custom'
+            });
+            setTempStartDate(null);
+            setTempEndDate(null);
+            setShowDatePicker(false);
+            
+            // Update comparison range if active
+            if (comparisonType !== 'none') {
+                const newComparisonRange = calculateAdvancedComparisonRange(
+                    { startDate: tempStartDate, endDate: tempEndDate },
+                    timeGranularity,
+                    comparisonType
+                );
+                setComparisonDateRange(newComparisonRange);
+            }
+        }
+    };
+    
+    // Cancel main date selection
+    const cancelMainDateSelection = () => {
+        setTempStartDate(null);
+        setTempEndDate(null);
+        setShowDatePicker(false);
+    };
 
     // --- Time Granularity State (must be before comparison handlers) ---
     const [timeGranularity, setTimeGranularity] = useState<'hour' | 'day' | 'week' | 'month'>('day');
@@ -457,6 +511,8 @@ export default function App() {
 
     // Date presets
     const DATE_PRESETS = [
+        { id: 'today', name: '今日', days: 0 },
+        { id: 'yesterday', name: '昨日', days: 1 },
         { id: 'last7', name: '近7天', days: 7 },
         { id: 'last14', name: '近14天', days: 14 },
         { id: 'last30', name: '近30天', days: 30 },
@@ -511,11 +567,37 @@ export default function App() {
     const applyDatePreset = (presetId: string) => {
         const preset = DATE_PRESETS.find(p => p.id === presetId);
         if (preset) {
-            const newRange = {
-                startDate: subDays(new Date(), preset.days),
-                endDate: new Date(),
-                preset: presetId
-            };
+            let newRange: { startDate: Date; endDate: Date; preset: string };
+            
+            if (presetId === 'today') {
+                // 今日: 今天0点到现在
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                newRange = {
+                    startDate: today,
+                    endDate: new Date(),
+                    preset: presetId
+                };
+            } else if (presetId === 'yesterday') {
+                // 昨日: 昨天0点到23:59:59
+                const yesterday = subDays(new Date(), 1);
+                yesterday.setHours(0, 0, 0, 0);
+                const yesterdayEnd = new Date(yesterday);
+                yesterdayEnd.setHours(23, 59, 59, 999);
+                newRange = {
+                    startDate: yesterday,
+                    endDate: yesterdayEnd,
+                    preset: presetId
+                };
+            } else {
+                // 其他预设: 近N天
+                newRange = {
+                    startDate: subDays(new Date(), preset.days),
+                    endDate: new Date(),
+                    preset: presetId
+                };
+            }
+            
             setDateRange(newRange);
             // Update comparison range if comparison is active
             if (comparisonType !== 'none') {
@@ -1586,11 +1668,16 @@ export default function App() {
                                     <div className="flex gap-2 items-center relative">
                                         <button
                                             onClick={() => setShowDatePicker(!showDatePicker)}
-                                            className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary text-xs font-medium rounded-lg hover:bg-primary/20 transition-colors border border-primary/20"
+                                            className={cn(
+                                                "text-xs px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 font-medium",
+                                                showDatePicker
+                                                    ? "bg-primary/20 text-primary border border-primary/30"
+                                                    : "bg-primary/10 text-primary hover:bg-primary/20"
+                                            )}
                                         >
-                                            <Calendar size={14} />
+                                            <Calendar size={12} />
                                             {formatDateRange()}
-                                            <ChevronDown size={12} className={cn("transition-transform", showDatePicker && "rotate-180")} />
+                                            <ChevronDown size={12} className={cn("transition-transform opacity-60", showDatePicker && "rotate-180")} />
                                         </button>
                                         {showDatePicker && (
                                             <div className="absolute top-full right-0 mt-2 z-50 bg-popover border border-border rounded-xl shadow-2xl p-4 min-w-[600px]">
@@ -1621,89 +1708,41 @@ export default function App() {
                                                         <div className="flex items-center gap-2 mb-4 px-2">
                                                             <input
                                                                 type="text"
-                                                                value={format(dateRange.startDate, 'yyyy-MM-dd')}
+                                                                value={tempStartDate ? format(tempStartDate, 'yyyy-MM-dd') : format(dateRange.startDate, 'yyyy-MM-dd')}
                                                                 readOnly
                                                                 className="flex-1 px-3 py-1.5 text-sm border border-border rounded-lg bg-muted/30 text-foreground"
                                                             />
                                                             <span className="text-muted-foreground">→</span>
                                                             <input
                                                                 type="text"
-                                                                value={format(dateRange.endDate, 'yyyy-MM-dd')}
+                                                                value={tempEndDate ? format(tempEndDate, 'yyyy-MM-dd') : format(dateRange.endDate, 'yyyy-MM-dd')}
                                                                 readOnly
                                                                 className="flex-1 px-3 py-1.5 text-sm border border-border rounded-lg bg-muted/30 text-foreground"
                                                             />
                                                         </div>
 
-                                                        <div className="grid grid-cols-2 gap-4">
-                                                            {/* Current Month Calendar */}
-                                                            <div className="text-center">
-                                                                <div className="font-medium text-sm mb-2">
-                                                                    {format(dateRange.startDate, 'yyyy年 M月')}
-                                                                </div>
-                                                                <div className="grid grid-cols-7 gap-1 text-xs">
-                                                                    {['一', '二', '三', '四', '五', '六', '日'].map(d => (
-                                                                        <div key={d} className="h-8 flex items-center justify-center text-muted-foreground font-medium">{d}</div>
-                                                                    ))}
-                                                                    {Array.from({ length: 35 }, (_, i) => {
-                                                                        const dayNum = i - 3;
-                                                                        const isInRange = dayNum >= 1 && dayNum <= 31;
-                                                                        const isSelected = dayNum >= 1 && dayNum <= 7;
-                                                                        return (
-                                                                            <div
-                                                                                key={i}
-                                                                                className={cn(
-                                                                                    "h-8 flex items-center justify-center rounded-md cursor-pointer transition-colors",
-                                                                                    !isInRange && "text-muted-foreground/30",
-                                                                                    isInRange && "hover:bg-muted",
-                                                                                    isSelected && isInRange && "bg-primary/10 text-primary"
-                                                                                )}
-                                                                            >
-                                                                                {isInRange ? dayNum : ''}
-                                                                            </div>
-                                                                        );
-                                                                    })}
-                                                                </div>
-                                                            </div>
-
-                                                            {/* Next Month Calendar */}
-                                                            <div className="text-center">
-                                                                <div className="font-medium text-sm mb-2">
-                                                                    {format(subDays(dateRange.endDate, -30), 'yyyy年 M月')}
-                                                                </div>
-                                                                <div className="grid grid-cols-7 gap-1 text-xs">
-                                                                    {['一', '二', '三', '四', '五', '六', '日'].map(d => (
-                                                                        <div key={d} className="h-8 flex items-center justify-center text-muted-foreground font-medium">{d}</div>
-                                                                    ))}
-                                                                    {Array.from({ length: 35 }, (_, i) => {
-                                                                        const dayNum = i - 5;
-                                                                        const isInRange = dayNum >= 1 && dayNum <= 28;
-                                                                        return (
-                                                                            <div
-                                                                                key={i}
-                                                                                className={cn(
-                                                                                    "h-8 flex items-center justify-center rounded-md cursor-pointer transition-colors",
-                                                                                    !isInRange && "text-muted-foreground/30",
-                                                                                    isInRange && "hover:bg-muted"
-                                                                                )}
-                                                                            >
-                                                                                {isInRange ? dayNum : ''}
-                                                                            </div>
-                                                                        );
-                                                                    })}
-                                                                </div>
-                                                            </div>
-                                                        </div>
+                                                        <DualMonthCalendar
+                                                            startDate={tempStartDate || dateRange.startDate}
+                                                            endDate={tempEndDate || dateRange.endDate}
+                                                            onDateClick={handleMainDateClick}
+                                                        />
 
                                                         <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-border">
                                                             <button
-                                                                onClick={() => setShowDatePicker(false)}
+                                                                onClick={cancelMainDateSelection}
                                                                 className="px-4 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
                                                             >
                                                                 取消
                                                             </button>
                                                             <button
-                                                                onClick={() => setShowDatePicker(false)}
-                                                                className="px-4 py-1.5 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                                                                onClick={confirmMainDateSelection}
+                                                                disabled={!tempStartDate || !tempEndDate}
+                                                                className={cn(
+                                                                    "px-4 py-1.5 text-sm rounded-lg transition-colors",
+                                                                    tempStartDate && tempEndDate
+                                                                        ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                                                                        : "bg-muted text-muted-foreground cursor-not-allowed"
+                                                                )}
                                                             >
                                                                 确定
                                                             </button>

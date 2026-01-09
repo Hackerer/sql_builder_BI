@@ -12,8 +12,14 @@ import { cn } from '../../lib/utils';
 import type { DateRangeState, ComparisonMode } from '../../types';
 import { DATE_PRESETS } from '../../data';
 
-/** Comparison Calendar Component - Dual month calendar view */
-function ComparisonCalendar({ comparisonDateRange }: { comparisonDateRange: { startDate: Date; endDate: Date } | null }) {
+/** Comparison Calendar Component - Dual month calendar view with click support */
+function ComparisonCalendar({ 
+    comparisonDateRange,
+    onDateSelect 
+}: { 
+    comparisonDateRange: { startDate: Date; endDate: Date } | null;
+    onDateSelect?: (date: Date) => void;
+}) {
     const baseDate = comparisonDateRange?.startDate || new Date();
     const [leftMonth, setLeftMonth] = useState(startOfMonth(baseDate));
     const rightMonth = addMonths(leftMonth, 1);
@@ -55,8 +61,10 @@ function ComparisonCalendar({ comparisonDateRange }: { comparisonDateRange: { st
                         <div key={`empty-${i}`} className="h-8" />
                     ))}
                     {days.map(day => (
-                        <div
+                        <button
                             key={day.toISOString()}
+                            onClick={() => onDateSelect?.(day)}
+                            type="button"
                             className={cn(
                                 "h-8 w-8 flex items-center justify-center text-sm rounded-full transition-colors",
                                 isInRange(day) && "bg-primary/20",
@@ -66,7 +74,7 @@ function ComparisonCalendar({ comparisonDateRange }: { comparisonDateRange: { st
                             )}
                         >
                             {format(day, 'd')}
-                        </div>
+                        </button>
                     ))}
                 </div>
             </div>
@@ -77,6 +85,7 @@ function ComparisonCalendar({ comparisonDateRange }: { comparisonDateRange: { st
         <div className="flex gap-6">
             <div className="flex items-start gap-2">
                 <button
+                    type="button"
                     onClick={() => navigateMonth('prev')}
                     className="p-1 hover:bg-muted rounded-lg transition-colors mt-0.5"
                 >
@@ -87,6 +96,7 @@ function ComparisonCalendar({ comparisonDateRange }: { comparisonDateRange: { st
             <div className="flex items-start gap-2">
                 {renderMonth(rightMonth)}
                 <button
+                    type="button"
                     onClick={() => navigateMonth('next')}
                     className="p-1 hover:bg-muted rounded-lg transition-colors mt-0.5"
                 >
@@ -123,6 +133,32 @@ export function DateRangePicker({
 }: DateRangePickerProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [isComparisonOpen, setIsComparisonOpen] = useState(false);
+    
+    // Temporary state for comparison date selection
+    const [tempCompStart, setTempCompStart] = useState<Date | null>(null);
+    const [tempCompEnd, setTempCompEnd] = useState<Date | null>(null);
+    
+    // Handle date selection in comparison calendar
+    const handleComparisonDateClick = (date: Date) => {
+        if (!tempCompStart || (tempCompStart && tempCompEnd)) {
+            // Start new selection
+            setTempCompStart(date);
+            setTempCompEnd(null);
+        } else {
+            // Complete the range
+            if (date < tempCompStart) {
+                setTempCompEnd(tempCompStart);
+                setTempCompStart(date);
+            } else {
+                setTempCompEnd(date);
+            }
+        }
+    };
+    
+    // Get the display comparison range (temp or actual)
+    const displayComparisonRange = tempCompStart && tempCompEnd 
+        ? { startDate: tempCompStart, endDate: tempCompEnd }
+        : comparisonDateRange;
 
     return (
         <div className="flex items-center gap-2">
@@ -226,6 +262,9 @@ export function DateRangePicker({
                                                 key={option.id}
                                                 onClick={() => {
                                                     onComparisonModeChange(option.id as 'dod' | 'wow' | 'mom' | 'yoy');
+                                                    // Reset temp selection when changing mode
+                                                    setTempCompStart(null);
+                                                    setTempCompEnd(null);
                                                 }}
                                                 className={cn(
                                                     "w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors",
@@ -246,7 +285,7 @@ export function DateRangePicker({
                                             <input
                                                 type="text"
                                                 readOnly
-                                                value={comparisonDateRange ? format(comparisonDateRange.startDate, 'yyyy-MM-dd') : ''}
+                                                value={displayComparisonRange ? format(displayComparisonRange.startDate, 'yyyy-MM-dd') : ''}
                                                 className="w-32 px-3 py-2 border border-border rounded-lg text-sm bg-muted/50 text-center"
                                                 placeholder="开始日期"
                                             />
@@ -254,25 +293,39 @@ export function DateRangePicker({
                                             <input
                                                 type="text"
                                                 readOnly
-                                                value={comparisonDateRange ? format(comparisonDateRange.endDate, 'yyyy-MM-dd') : ''}
+                                                value={displayComparisonRange ? format(displayComparisonRange.endDate, 'yyyy-MM-dd') : ''}
                                                 className="w-32 px-3 py-2 border border-border rounded-lg text-sm bg-muted/50 text-center"
                                                 placeholder="结束日期"
                                             />
                                         </div>
 
                                         {/* Dual Calendar Display */}
-                                        <ComparisonCalendar comparisonDateRange={comparisonDateRange} />
+                                        <ComparisonCalendar 
+                                            comparisonDateRange={displayComparisonRange} 
+                                            onDateSelect={handleComparisonDateClick}
+                                        />
 
                                         {/* Action buttons */}
                                         <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-border">
                                             <button
-                                                onClick={() => setIsComparisonOpen(false)}
+                                                onClick={() => {
+                                                    setIsComparisonOpen(false);
+                                                    // Reset temp selection on cancel
+                                                    setTempCompStart(null);
+                                                    setTempCompEnd(null);
+                                                }}
                                                 className="px-4 py-2 text-sm text-muted-foreground hover:bg-muted rounded-lg transition-colors"
                                             >
                                                 取消
                                             </button>
                                             <button
-                                                onClick={() => setIsComparisonOpen(false)}
+                                                onClick={() => {
+                                                    // TODO: Save the temp selection to actual comparison range
+                                                    // This would require adding a new prop like onComparisonDateRangeChange
+                                                    setIsComparisonOpen(false);
+                                                    setTempCompStart(null);
+                                                    setTempCompEnd(null);
+                                                }}
                                                 className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
                                             >
                                                 确定

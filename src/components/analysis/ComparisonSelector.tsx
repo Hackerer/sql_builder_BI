@@ -1,5 +1,5 @@
 import React from 'react';
-import { GitCompare, ChevronDown, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { ComparisonType, TimeGranularity } from '../../types';
 import { getValidComparisonTypes, getComparisonLabel, calculateAdvancedComparisonRange } from '../../lib/comparison';
@@ -13,8 +13,14 @@ interface ComparisonSelectorProps {
     dateRange: { startDate: Date; endDate: Date };
 }
 
-/** Dual Calendar Component for comparison date display */
-function ComparisonCalendar({ comparisonDateRange }: { comparisonDateRange: { startDate: Date; endDate: Date } | null }) {
+/** Dual Calendar Component for comparison date display with click support */
+function ComparisonCalendar({ 
+    comparisonDateRange,
+    onDateSelect 
+}: { 
+    comparisonDateRange: { startDate: Date; endDate: Date } | null;
+    onDateSelect?: (date: Date) => void;
+}) {
     const baseDate = comparisonDateRange?.startDate || new Date();
     const [leftMonth, setLeftMonth] = React.useState(startOfMonth(baseDate));
     const rightMonth = addMonths(leftMonth, 1);
@@ -59,17 +65,20 @@ function ComparisonCalendar({ comparisonDateRange }: { comparisonDateRange: { st
                         <div key={`empty-${i}`} className="h-7" />
                     ))}
                     {days.map(day => (
-                        <div
+                        <button
                             key={day.toISOString()}
+                            type="button"
+                            onClick={() => onDateSelect?.(day)}
                             className={cn(
-                                "h-7 w-7 flex items-center justify-center text-xs transition-colors",
+                                "h-7 w-7 flex items-center justify-center text-xs transition-colors rounded-md",
                                 isInRange(day) && "bg-amber-100 dark:bg-amber-900/30",
                                 isStart(day) && "bg-amber-500 text-white rounded-l-full",
                                 isEnd(day) && "bg-amber-500 text-white rounded-r-full",
+                                !isInRange(day) && "hover:bg-muted cursor-pointer"
                             )}
                         >
                             {format(day, 'd')}
-                        </div>
+                        </button>
                     ))}
                 </div>
             </div>
@@ -80,6 +89,7 @@ function ComparisonCalendar({ comparisonDateRange }: { comparisonDateRange: { st
         <div className="flex gap-4">
             <div className="flex items-start gap-1">
                 <button
+                    type="button"
                     onClick={() => navigateMonth('prev')}
                     className="p-1 hover:bg-muted rounded transition-colors mt-0.5"
                 >
@@ -90,6 +100,7 @@ function ComparisonCalendar({ comparisonDateRange }: { comparisonDateRange: { st
             <div className="flex items-start gap-1">
                 {renderMonth(rightMonth)}
                 <button
+                    type="button"
                     onClick={() => navigateMonth('next')}
                     className="p-1 hover:bg-muted rounded transition-colors mt-0.5"
                 >
@@ -109,6 +120,27 @@ const ComparisonSelector: React.FC<ComparisonSelectorProps> = ({
     const [isOpen, setIsOpen] = React.useState(false);
     const containerRef = React.useRef<HTMLDivElement>(null);
 
+    // Temporary state for manual date selection
+    const [tempCompStart, setTempCompStart] = React.useState<Date | null>(null);
+    const [tempCompEnd, setTempCompEnd] = React.useState<Date | null>(null);
+
+    // Handle date selection in calendar
+    const handleDateClick = (date: Date) => {
+        if (!tempCompStart || (tempCompStart && tempCompEnd)) {
+            // Start new selection
+            setTempCompStart(date);
+            setTempCompEnd(null);
+        } else {
+            // Complete the range
+            if (date < tempCompStart) {
+                setTempCompEnd(tempCompStart);
+                setTempCompStart(date);
+            } else {
+                setTempCompEnd(date);
+            }
+        }
+    };
+
     // Close on click outside
     React.useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -124,25 +156,30 @@ const ComparisonSelector: React.FC<ComparisonSelectorProps> = ({
     const activeLabel = comparisonType === 'none' ? '对比' : getComparisonLabel(comparisonType, granularity);
     const shortLabel = activeLabel.split(' (')[0];
 
-    // Calculate comparison date range for display
-    const comparisonDateRange = comparisonType !== 'none'
-        ? calculateAdvancedComparisonRange(dateRange, granularity, comparisonType)
-        : null;
+    // Calculate comparison date range for display (use temp if available)
+    const comparisonDateRange = React.useMemo(() => {
+        if (tempCompStart && tempCompEnd) {
+            return { startDate: tempCompStart, endDate: tempCompEnd };
+        }
+        return comparisonType !== 'none'
+            ? calculateAdvancedComparisonRange(dateRange, granularity, comparisonType)
+            : null;
+    }, [comparisonType, dateRange, granularity, tempCompStart, tempCompEnd]);
 
     return (
         <div className="relative" ref={containerRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className={cn(
-                    "flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl transition-all border shadow-sm",
-                    comparisonType !== 'none'
-                        ? "bg-card border-amber-500/30 text-amber-600 hover:border-amber-500/50"
-                        : "bg-card border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                    "text-xs px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 font-medium",
+                    isOpen
+                        ? "bg-amber-500/20 text-amber-600 border border-amber-500/30"
+                        : "bg-amber-500/10 text-amber-600 hover:bg-amber-500/20"
                 )}
             >
-                <Calendar size={16} className={comparisonType !== 'none' ? "text-amber-500" : ""} />
+                <Calendar size={12} className={comparisonType !== 'none' ? "text-amber-500" : "text-amber-600"} />
                 <span>{shortLabel}</span>
-                <ChevronDown size={14} className={cn("transition-transform opacity-60", isOpen && "rotate-180")} />
+                <ChevronDown size={12} className={cn("transition-transform opacity-60", isOpen && "rotate-180")} />
             </button>
 
             {isOpen && (
@@ -156,6 +193,8 @@ const ComparisonSelector: React.FC<ComparisonSelectorProps> = ({
                         <button
                             onClick={() => {
                                 onTypeChange('none');
+                                setTempCompStart(null);
+                                setTempCompEnd(null);
                             }}
                             className={cn(
                                 "w-full text-left px-3 py-2 text-sm rounded-lg transition-colors",
@@ -180,6 +219,8 @@ const ComparisonSelector: React.FC<ComparisonSelectorProps> = ({
                                     key={type}
                                     onClick={() => {
                                         onTypeChange(type);
+                                        setTempCompStart(null);
+                                        setTempCompEnd(null);
                                     }}
                                     className={cn(
                                         "w-full text-left px-3 py-2 text-sm rounded-lg transition-colors",
@@ -216,18 +257,31 @@ const ComparisonSelector: React.FC<ComparisonSelectorProps> = ({
                         </div>
 
                         {/* Dual Calendar Display */}
-                        <ComparisonCalendar comparisonDateRange={comparisonDateRange} />
+                        <ComparisonCalendar 
+                            comparisonDateRange={comparisonDateRange} 
+                            onDateSelect={handleDateClick}
+                        />
 
                         {/* Action buttons */}
                         <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-border">
                             <button
-                                onClick={() => setIsOpen(false)}
+                                onClick={() => {
+                                    setIsOpen(false);
+                                    setTempCompStart(null);
+                                    setTempCompEnd(null);
+                                }}
                                 className="px-4 py-1.5 text-sm text-muted-foreground hover:bg-muted rounded-lg transition-colors"
                             >
                                 取消
                             </button>
                             <button
-                                onClick={() => setIsOpen(false)}
+                                onClick={() => {
+                                    // TODO: Save the temp selection
+                                    // For now, just close the modal
+                                    setIsOpen(false);
+                                    setTempCompStart(null);
+                                    setTempCompEnd(null);
+                                }}
                                 className="px-4 py-1.5 text-sm bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
                             >
                                 确定
