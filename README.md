@@ -170,11 +170,7 @@ zizhu_analysis2026/
 
 | 组别 | 维度 | 说明 |
 |------|------|------|
-| 时间 | 日期 (dt) | 统计日期，核心维度 |
-| 地域 | 城市 (city) | 运营城市，核心维度 |
-| 业务 | 供应商、产品线、服务类型、JKC内外部 | 业务分类维度 |
-| 订单 | 取消类型、取消阶段 | 订单状态维度 |
-| 车辆 | 车辆用途、资产性质 | 车辆属性维度 |
+
 
 ### 指标系统 (Metrics)
 
@@ -182,12 +178,7 @@ zizhu_analysis2026/
 
 | 主题 | 子分组 | 典型指标 |
 |------|--------|----------|
-| 订单 | 订单漏斗 | 呼单量、应答单量、接驾单量、上车单量、启程单量、完单量、支付单量 |
-| 订单 | 订单取消 | 取消量 |
-| 用户 | 用户漏斗 | 呼单用户数、完单用户数 |
-| 效率 | 核心转化 | 应答率、接驾率、呼单完单率 |
-| 时长 | 时效体验 | 应答时长、实际接驾时长、极致体验率 |
-| 车辆 | 车辆运营 | 上线车辆数、上线时长 |
+
 
 ### 对比模式 (Comparison)
 
@@ -428,27 +419,6 @@ npm run build
 | **Search** | Fuse.js 7.1 | Fuzzy search engine |
 
 ---
-
-## 📂 Project Structure
-
-```text
-src/
-├── App.tsx                        # Main application entry
-├── components/
-│   ├── analysis/                  # Core BI components
-│   │   ├── ChartContainer.tsx     # Multi-chart container
-│   │   ├── ComparisonSelector.tsx # Comparison mode picker
-│   │   ├── DataTable.tsx          # Detail data table
-│   │   ├── DateRangePicker.tsx    # Date range picker
-│   │   ├── DimensionSelector.tsx  # Multi-dimension selector
-│   │   ├── FilterBuilder.tsx      # Dynamic filter builder
-│   │   └── TimeGranularitySelector.tsx
-│   ├── common/                    # Shared UI components
-│   └── layout/                    # Layout components
-├── data/                          # Business metadata
-├── lib/                           # Core logic utilities
-└── types/                         # TypeScript definitions
-```
 
 ---
 
