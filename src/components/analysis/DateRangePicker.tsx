@@ -115,6 +115,7 @@ export interface DateRangePickerProps {
     comparisonMode: ComparisonMode;
     onComparisonModeChange: (mode: 'dod' | 'wow' | 'mom' | 'yoy') => void;
     comparisonDateRange: { startDate: Date; endDate: Date } | null;
+    onComparisonDateRangeChange: (range: { startDate: Date; endDate: Date }) => void;
     formatDateRange: () => string;
     formatComparisonRange: () => string;
     applyDatePreset: (presetId: string) => void;
@@ -127,6 +128,7 @@ export function DateRangePicker({
     comparisonMode,
     onComparisonModeChange,
     comparisonDateRange,
+    onComparisonDateRangeChange,
     formatDateRange,
     formatComparisonRange,
     applyDatePreset,
@@ -320,8 +322,13 @@ export function DateRangePicker({
                                             </button>
                                             <button
                                                 onClick={() => {
-                                                    // TODO: Save the temp selection to actual comparison range
-                                                    // This would require adding a new prop like onComparisonDateRangeChange
+                                                    // Save the temp selection to actual comparison range
+                                                    if (tempCompStart && tempCompEnd) {
+                                                        onComparisonDateRangeChange?.({
+                                                            startDate: tempCompStart,
+                                                            endDate: tempCompEnd
+                                                        });
+                                                    }
                                                     setIsComparisonOpen(false);
                                                     setTempCompStart(null);
                                                     setTempCompEnd(null);

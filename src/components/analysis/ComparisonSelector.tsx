@@ -11,6 +11,8 @@ interface ComparisonSelectorProps {
     comparisonType: ComparisonType;
     onTypeChange: (type: ComparisonType) => void;
     dateRange: { startDate: Date; endDate: Date };
+    savedComparisonRange: { startDate: Date; endDate: Date } | null;
+    onComparisonDateRangeChange: (range: { startDate: Date; endDate: Date }) => void;
 }
 
 /** Dual Calendar Component for comparison date display with click support */
@@ -115,7 +117,9 @@ const ComparisonSelector: React.FC<ComparisonSelectorProps> = ({
     granularity,
     comparisonType,
     onTypeChange,
-    dateRange
+    dateRange,
+    savedComparisonRange,
+    onComparisonDateRangeChange
 }) => {
     const [isOpen, setIsOpen] = React.useState(false);
     const containerRef = React.useRef<HTMLDivElement>(null);
@@ -276,8 +280,13 @@ const ComparisonSelector: React.FC<ComparisonSelectorProps> = ({
                             </button>
                             <button
                                 onClick={() => {
-                                    // TODO: Save the temp selection
-                                    // For now, just close the modal
+                                    // Save the temp selection
+                                    if (tempCompStart && tempCompEnd) {
+                                        onComparisonDateRangeChange?.({
+                                            startDate: tempCompStart,
+                                            endDate: tempCompEnd
+                                        });
+                                    }
                                     setIsOpen(false);
                                     setTempCompStart(null);
                                     setTempCompEnd(null);

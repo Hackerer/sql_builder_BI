@@ -561,7 +561,7 @@ export default function App() {
             const range = calculateAdvancedComparisonRange(dateRange, timeGranularity, comparisonType);
             setComparisonDateRange(range);
         }
-    }, [dateRange, timeGranularity]);
+    }, [dateRange, timeGranularity, comparisonType]);
 
     // Apply date preset
     const applyDatePreset = (presetId: string) => {
@@ -1758,6 +1758,8 @@ export default function App() {
                                         comparisonType={comparisonType}
                                         onTypeChange={(type) => handleComparisonTypeChange(type)}
                                         dateRange={dateRange}
+                                        savedComparisonRange={comparisonDateRange}
+                                        onComparisonDateRangeChange={setComparisonDateRange}
                                     />
 
                                     <div className="w-px h-4 bg-border mx-1"></div>
